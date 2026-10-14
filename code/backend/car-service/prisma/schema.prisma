@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  // Explicit so the output is identical on every platform (no .ts import extensions / CJS surprises)
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Car {
+  id        String   @id @default(uuid())
+  make      String
+  model     String
+  year      Int
+  color     String
+  mileage   Int
+  price     Float
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("cars")
+}

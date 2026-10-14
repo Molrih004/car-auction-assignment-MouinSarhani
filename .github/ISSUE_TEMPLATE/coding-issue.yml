@@ -1,0 +1,52 @@
+name: Coding Issue
+description: One vertical slice of a user story, small enough for one PR
+title: "Coding issue"
+labels: ["coding-issue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for implementation work. One issue = one acceptance criterion (vertical slice:
+        UI → API → DB), or one arrow / one alt-branch from a sequence diagram if you drew one
+        for a cross-cutting concern. See ISSUES_CREATION.md, Part B, before filling this in.
+
+  - type: input
+    id: parent
+    attributes:
+      label: Parent story/epic
+      description: "Link with e.g. Closes #12"
+    validations:
+      required: true
+
+  - type: textarea
+    id: implements
+    attributes:
+      label: Which acceptance criterion (or sequence diagram step) does this implement?
+      description: Quote or paraphrase the specific criterion/step. Don't restate the whole story.
+    validations:
+      required: true
+
+  - type: textarea
+    id: checklist
+    attributes:
+      label: Sub-tasks
+      description: A short checklist, if there are concrete sub-steps.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: size_check
+    attributes:
+      label: Size check
+      options:
+        - label: Completable in a few hours to one day
+          required: true
+        - label: Independently mergeable
+          required: true
+        - label: Testable on its own (even if behind a feature flag)
+          required: true
+        - label: If this is an error/edge-case path, it's kept as one issue end-to-end rather than split by component
+          required: false

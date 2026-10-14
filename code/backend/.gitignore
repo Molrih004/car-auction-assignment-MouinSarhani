@@ -1,0 +1,17 @@
+# Each service has its own .gitignore (so it can be taken out on its own).
+# This file only covers clutter at the repository root.
+
+# macOS
+.DS_Store
+._*
+
+# Windows
+Thumbs.db
+[Dd]esktop.ini
+
+# Editors
+.idea/
+.vscode/*
+
+# Dependencies (should a stray install happen at the root)
+node_modules/

@@ -1,0 +1,85 @@
+name: Product Issue
+description: One analysis/design deliverable (or a slice of one) from products/products.md
+title: "[Product] "
+labels: ["product-issue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for analysis/design work — persona, diagrams, specs, prototypes, test plans.
+        One issue = one deliverable you can finish in a few hours and describe as "done" in one sentence.
+        See ISSUES_CREATION.md, Part A, before filling this in.
+
+  - type: dropdown
+    id: product
+    attributes:
+      label: Product
+      options:
+      - Persona
+      - Journey map
+      - System requirements
+      - 2 System Context Diagrams (UCD and Level 0 DFD)
+      - Wireflow
+      - High fidelity prototype (please pay attention to heuristics)
+      - Use-case specification (2 filled in Use Case templates per student)
+      - Activity diagram of 1 of the Use Cases per student
+      - Entity Relationship Diagram
+      - UML Component diagram of the Microservice Architecture
+      - API message design (logical data object) and API Specification per microservice.
+      - UXD Testing (test script, questions and findings)
+    validations:
+      required: true
+
+  - type: input
+    id: subject
+    attributes:
+      label: Subject / scope
+      description: The specific slice of the product this issue covers — not the whole category.
+      placeholder: "e.g. Persona: frontdesk employee — or — Use case: reset password"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What needs to be produced, and why
+      description: Link the story or requirement this supports.
+    validations:
+      required: true
+
+  - type: textarea
+    id: definition_of_done
+    attributes:
+      label: Definition of done
+      description: Where it's committed, what format, who reviews it.
+      placeholder: "e.g. Committed as products/erd.md (Mermaid), reviewed by one teammate, terminology matches the glossary"
+    validations:
+      required: true
+
+  - type: input
+    id: parent
+    attributes:
+      label: Parent story/epic
+      description: "Link with e.g. Closes #12 or Relates to #12"
+    validations:
+      required: true
+
+  - type: input
+    id: depends_on
+    attributes:
+      label: Depends on (optional)
+      description: Any prerequisite issue that must be merged first
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: size_check
+    attributes:
+      label: Size check
+      options:
+        - label: Completable in a few hours
+          required: true
+        - label: Can be described as "done" in one sentence
+          required: true
+        - label: Reviewable as a single PR (text/diagram-as-code where possible, not a bundle of unrelated content)
+          required: true

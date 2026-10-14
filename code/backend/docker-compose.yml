@@ -1,0 +1,46 @@
+# Runs the full car-auction-starter stack: docker compose up --build
+# Each service builds from its own folder and Dockerfile; nothing here is shared config.
+
+services:
+  car-service:
+    build: ./car-service
+    environment:
+      DATABASE_URL: file:/data/database.sqlite
+      PORT: 4000
+      # Replaces all cars with the sample data on every start; set to "false" to keep your data
+      SEED_DATABASE: "true"
+    volumes:
+      - car-data:/data
+    ports:
+      - "4000:4000"
+
+  auth-service:
+    build: ./auth-service
+    environment:
+      DATABASE_URL: file:/data/database.sqlite
+      PORT: 4001
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+      JWT_EXPIRES_IN: 7d
+      # Creates/resets the demo users (student@ and admin@example.com, password supersecret1); other users are kept
+      SEED_DATABASE: "true"
+    volumes:
+      - auth-data:/data
+    ports:
+      - "4001:4001"
+
+  api-gateway-service:
+    build: ./api-gateway-service
+    environment:
+      PORT: 3000
+      # Service names resolve on the compose network; localhost would point at the gateway container itself
+      CAR_SERVICE_URL: http://car-service:4000
+      AUTH_SERVICE_URL: http://auth-service:4001
+    depends_on:
+      - car-service
+      - auth-service
+    ports:
+      - "3000:3000"
+
+volumes:
+  car-data:
+  auth-data:
