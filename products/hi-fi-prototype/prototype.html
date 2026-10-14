@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VeloVault prototype</title>
+<style>
+  :root {
+    --bg: #f6f3ec;
+    --card: #fffdf8;
+    --ink: #1e2a23;
+    --muted: #5b675f;
+    --line: #ddd5c6;
+    --accent: #23473a;
+    --accent-ink: #ffffff;
+    --soft: #e9eee9;
+    --error-bg: #f8ece9;
+    --error-line: #b9887d;
+    --ok-bg: #e8f0ea;
+    --ok-line: #7fa48d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #d9d4c9; font: 15px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); }
+  h1, h2, h3, .brand { font-family: Georgia, "Times New Roman", serif; font-weight: normal; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 19px; margin: 0 0 8px; }
+  h3 { font-size: 16px; margin: 0 0 6px; }
+  p { margin: 0 0 10px; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+
+  /* screens */
+  .screen { display: none; background: var(--bg); margin: 24px auto; box-shadow: 0 1px 4px rgba(0,0,0,.15); overflow: hidden; }
+  .screen.show { display: block; }
+  .phone { width: 390px; min-height: 844px; }
+  .laptop { width: 1280px; min-height: 800px; }
+  .screen-label { position: fixed; top: 8px; left: 8px; background: #fff; padding: 4px 8px; font-size: 12px; border-radius: 4px; }
+
+  /* header */
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--card); }
+  .brand { font-size: 20px; letter-spacing: .5px; color: var(--accent); }
+  .top .user { font-size: 13px; color: var(--muted); }
+  .wrap { padding: 16px; }
+  .back { display: inline-block; margin-bottom: 10px; font-size: 14px; text-decoration: none; }
+
+  /* parts */
+  .photo { height: 210px; border-radius: 6px; background: linear-gradient(135deg, #b9b2a3, #8f9a8f); display: flex; align-items: flex-end; padding: 10px; color: #fff; font-size: 12px; }
+  .photo.sm { height: 96px; width: 128px; flex: none; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); }
+  .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .status.open { color: var(--accent); }
+  .status.closed { color: #6b6b6b; }
+  .status.pending { color: #8a6a2a; }
+  .status.cancelled { color: #7a3b33; }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+  .fact .k { font-size: 12px; color: var(--muted); }
+  .fact .v { font-size: 18px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .input { display: flex; align-items: center; border: 1px solid #b8b0a1; border-radius: 6px; background: #fff; padding: 0 12px; height: 46px; font-size: 17px; }
+  .input .eur { color: var(--muted); margin-right: 6px; }
+  .input.bad { border-color: var(--error-line); border-width: 2px; }
+  .hint { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .btn { display: block; width: 100%; height: 48px; border: 0; border-radius: 6px; background: var(--accent); color: var(--accent-ink); font-size: 16px; margin-top: 12px; text-align: center; line-height: 48px; text-decoration: none; cursor: pointer; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .btn.inline { display: inline-block; width: auto; padding: 0 20px; margin: 0 8px 0 0; }
+  .msg { border-radius: 6px; padding: 12px; margin: 12px 0; font-size: 14px; border: 1px solid; }
+  .msg.error { background: var(--error-bg); border-color: var(--error-line); }
+  .msg.ok { background: var(--ok-bg); border-color: var(--ok-line); }
+  .msg b { display: block; margin-bottom: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 600; font-size: 12px; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+  .chip { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: 13px; background: var(--card); }
+  .chip.on { border-color: var(--accent); background: var(--soft); }
+  .listing { display: flex; gap: 12px; text-decoration: none; color: inherit; }
+  .countdown { font-size: 14px; color: var(--accent); }
+  .overlay { position: absolute; inset: 0; background: rgba(30,42,35,.45); display: flex; align-items: center; justify-content: center; }
+  .dialog { background: var(--card); border-radius: 10px; padding: 24px; width: 520px; box-shadow: 0 8px 30px rgba(0,0,0,.25); }
+  .rel { position: relative; }
+  .cols { display: grid; grid-template-columns: 1fr 420px; gap: 24px; }
+  .search { display: flex; gap: 8px; margin-bottom: 16px; }
+  .search .input { flex: 1; font-size: 15px; }
+  tr.sel td { background: var(--soft); }
+
+  /* wireframe mode for the wireflow */
+  body.wire { background: #eee; }
+  body.wire .screen { background: #fff; }
+  body.wire * { font-family: Arial, Helvetica, sans-serif !important; color: #333 !important; border-color: #999 !important; box-shadow: none !important; }
+  body.wire .photo { background: #ddd !important; background-image: linear-gradient(to top right, transparent calc(50% - 1px), #aaa, transparent calc(50% + 1px)), linear-gradient(to top left, transparent calc(50% - 1px), #aaa, transparent calc(50% + 1px)) !important; color: transparent !important; }
+  body.wire .btn { background: #888 !important; color: #fff !important; }
+  body.wire .btn.ghost { background: #fff !important; color: #333 !important; }
+  body.wire .msg, body.wire .card, body.wire .top, body.wire .chip.on, body.wire tr.sel td, body.wire .dialog { background: #fff !important; }
+  body.wire .overlay { background: rgba(0,0,0,.25) !important; }
+  body.wire .status::before { background: #999 !important; }
+</style>
+</head>
+<body>
+
+<!-- ===================== BUYER (phone) ===================== -->
+
+<section class="screen phone" id="b1">
+  <div class="top"><span class="brand">VeloVault</span><span class="user">Tom V. · Buyer</span></div>
+  <div class="wrap">
+    <h1>Cars at auction</h1>
+    <p class="muted small">3 cars match your filters</p>
+    <div class="chips">
+      <span class="chip on">Citroën, Peugeot</span>
+      <span class="chip on">1960 – 1979</span>
+      <span class="chip on">Excellent, Good</span>
+      <span class="chip">Clear filters</span>
+    </div>
+    <a class="card listing" href="#b2">
+      <div class="photo sm">photo</div>
+      <div>
+        <h3>Citroën DS 21 Pallas, 1969</h3>
+        <span class="status open">Open · ends Fri 16 Oct, 20:00</span>
+        <p class="small muted" style="margin-top:6px">Current bid € 18.000 · 8 bids</p>
+      </div>
+    </a>
+    <div class="card listing">
+      <div class="photo sm">photo</div>
+      <div>
+        <h3>Peugeot 404 Coupé, 1965</h3>
+        <span class="status pending">Starts Sat 17 Oct, 10:00</span>
+        <p class="small muted" style="margin-top:6px">Starting price € 12.500</p>
+      </div>
+    </div>
+    <div class="card listing">
+      <div class="photo sm">photo</div>
+      <div>
+        <h3>Citroën SM, 1972</h3>
+        <span class="status open">Open · ends Tue 20 Oct, 19:30</span>
+        <p class="small muted" style="margin-top:6px">No bids yet · starting price € 38.000</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="screen phone" id="b2">
+  <div class="top"><span class="brand">VeloVault</span><span class="user">Tom V. · Buyer</span></div>
+  <div class="wrap">
+    <a class="back" href="#b1">‹ Back to the list (your filters stay)</a>
+    <div class="photo">1 / 54 photos</div>
+    <h1 style="margin-top:12px">Citroën DS 21 Pallas, 1969</h1>
+    <p class="muted small">Gris Palladium · 112.000 km · condition: Good</p>
+    <span class="status open">Open</span>
+    <div class="facts">
+      <div class="fact"><div class="k">Current bid</div><div class="v">€ 18.000</div></div>
+      <div class="fact"><div class="k">Bids</div><div class="v">8</div></div>
+      <div class="fact"><div class="k">Ends</div><div class="v" style="font-size:15px">Fri 16 Oct, 20:00</div></div>
+      <div class="fact"><div class="k">Time left</div><div class="v countdown">1 h 18 min</div></div>
+    </div>
+    <div class="card">
+      <label for="amount">Your bid</label>
+      <div class="input"><span class="eur">€</span>18.500</div>
+      <div class="hint">Lowest allowed bid: € 18.001</div>
+      <a class="btn" href="#b4">Place bid</a>
+    </div>
+    <div class="card">
+      <h3>Bid history</h3>
+      <table>
+        <tr><th>Amount</th><th>Time</th></tr>
+        <tr><td>€ 18.000</td><td>Fri 16 Oct, 18:31</td></tr>
+        <tr><td>€ 17.500</td><td>Fri 16 Oct, 17:02</td></tr>
+        <tr><td>€ 17.000</td><td>Thu 15 Oct, 21:45</td></tr>
+      </table>
+      <p class="small muted" style="margin-top:8px">Bidders are not shown. Show all 8 bids</p>
+    </div>
+  </div>
+</section>
+
+<section class="screen phone" id="b3">
+  <div class="top"><span class="brand">VeloVault</span><span class="user">Tom V. · Buyer</span></div>
+  <div class="wrap">
+    <a class="back" href="#b1">‹ Back to the list (your filters stay)</a>
+    <h1>Citroën DS 21 Pallas, 1969</h1>
+    <span class="status open">Open</span>
+    <div class="facts">
+      <div class="fact"><div class="k">Current bid</div><div class="v">€ 18.500</div></div>
+      <div class="fact"><div class="k">Bids</div><div class="v">9</div></div>
+      <div class="fact"><div class="k">Ends</div><div class="v" style="font-size:15px">Fri 16 Oct, 20:00</div></div>
+      <div class="fact"><div class="k">Time left</div><div class="v countdown">1 h 16 min</div></div>
+    </div>
+    <div class="card">
+      <div class="msg error"><b>Someone placed a higher bid just before you.</b>Your bid has to be at least € 18.501. Your amount is still in the field.</div>
+      <label for="amount2">Your bid</label>
+      <div class="input bad"><span class="eur">€</span>18.500</div>
+      <div class="hint">Lowest allowed bid: € 18.501</div>
+      <a class="btn" href="#b4">Place bid</a>
+    </div>
+  </div>
+</section>
+
+<section class="screen phone" id="b4">
+  <div class="top"><span class="brand">VeloVault</span><span class="user">Tom V. · Buyer</span></div>
+  <div class="wrap">
+    <a class="back" href="#b1">‹ Back to the list (your filters stay)</a>
+    <h1>Citroën DS 21 Pallas, 1969</h1>
+    <span class="status open">Open</span>
+    <div class="msg ok"><b>Your bid is placed.</b>€ 18.500 at 18:42. You are now the highest bidder.</div>
+    <div class="facts">
+      <div class="fact"><div class="k">Current bid</div><div class="v">€ 18.500 (yours)</div></div>
+      <div class="fact"><div class="k">Bids</div><div class="v">9</div></div>
+      <div class="fact"><div class="k">Ends</div><div class="v" style="font-size:15px">Fri 16 Oct, 20:00</div></div>
+      <div class="fact"><div class="k">Time left</div><div class="v countdown">1 h 18 min</div></div>
+    </div>
+    <div class="card">
+      <h3>Bid history</h3>
+      <table>
+        <tr><th>Amount</th><th>Time</th></tr>
+        <tr><td>€ 18.500 (you)</td><td>Fri 16 Oct, 18:42</td></tr>
+        <tr><td>€ 18.000</td><td>Fri 16 Oct, 18:31</td></tr>
+        <tr><td>€ 17.500</td><td>Fri 16 Oct, 17:02</td></tr>
+      </table>
+    </div>
+    <a class="btn ghost" href="#b2">Place a higher bid</a>
+  </div>
+</section>
+
+<section class="screen phone" id="b5">
+  <div class="top"><span class="brand">VeloVault</span><span class="user">Tom V. · Buyer</span></div>
+  <div class="wrap">
+    <a class="back" href="#b1">‹ Back to the list (your filters stay)</a>
+    <div class="photo">1 / 54 photos</div>
+    <h1 style="margin-top:12px">Citroën DS 21 Pallas, 1969</h1>
+    <span class="status closed">Closed · ended Fri 16 Oct, 20:00</span>
+    <div class="msg error"><b>This auction is closed.</b>You can't bid anymore. The final price and the bid history stay here.</div>
+    <div class="facts">
+      <div class="fact"><div class="k">Final bid</div><div class="v">€ 21.000</div></div>
+      <div class="fact"><div class="k">Bids</div><div class="v">14</div></div>
+    </div>
+    <div class="card">
+      <h3>Bid history</h3>
+      <table>
+        <tr><th>Amount</th><th>Time</th></tr>
+        <tr><td>€ 21.000</td><td>Fri 16 Oct, 19:58</td></tr>
+        <tr><td>€ 20.500</td><td>Fri 16 Oct, 19:56</td></tr>
+        <tr><td>€ 20.000</td><td>Fri 16 Oct, 19:41</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="screen phone" id="b6">
+  <div class="top"><span class="brand">VeloVault</span><span class="user">Not logged in</span></div>
+  <div class="wrap">
+    <h1>Log in again</h1>
+    <div class="msg error"><b>Your login has expired.</b>Log in again and you go straight back to the auction. Your bid of € 18.500 is not lost.</div>
+    <div class="card">
+      <label>Email</label>
+      <div class="input" style="font-size:15px">tom.verhoeven@example.nl</div>
+      <label style="margin-top:12px">Password</label>
+      <div class="input" style="font-size:15px">••••••••••</div>
+      <a class="btn" href="#b2">Log in and go back</a>
+      <p class="small" style="margin-top:12px"><a href="#b6">Forgot your password?</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== STAFF (laptop) ===================== -->
+
+<section class="screen laptop" id="s1">
+  <div class="top"><span class="brand">VeloVault · Staff</span><span class="user">Sandra M. · Staff</span></div>
+  <div class="wrap" style="padding:24px 32px">
+    <h1>Auctions</h1>
+    <div class="search"><div class="input">Porsche 911</div><a class="btn inline" href="#s2" style="height:46px;line-height:46px">Search</a></div>
+    <p class="muted small">Search on car, seller name or email · 2 results</p>
+    <table>
+      <tr><th>Car</th><th>Seller</th><th>Status</th><th>Ends</th><th>Current bid</th><th>Bids</th><th></th></tr>
+      <tr class="sel"><td><b>Porsche 911 T, 1973</b></td><td>Diane Hoekstra · d.hoekstra@example.nl</td><td><span class="status open">Active</span></td><td>Sun 18 Oct, 20:00</td><td>€ 54.000</td><td>6</td><td><a href="#s2">Open</a></td></tr>
+      <tr><td><b>Porsche 911 E, 1971</b></td><td>Jan de Wit · jandewit@example.nl</td><td><span class="status pending">Pending</span></td><td>Sat 24 Oct, 18:00</td><td>–</td><td>0</td><td><a href="#s2">Open</a></td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="screen laptop" id="s2">
+  <div class="top"><span class="brand">VeloVault · Staff</span><span class="user">Sandra M. · Staff</span></div>
+  <div class="wrap" style="padding:24px 32px">
+    <a class="back" href="#s1">‹ Back to search results</a>
+    <div class="cols">
+      <div>
+        <div class="photo" style="height:300px">photo</div>
+        <h1 style="margin-top:14px">Porsche 911 T, 1973</h1>
+        <p class="muted">Seller: Diane Hoekstra · d.hoekstra@example.nl</p>
+        <div class="card">
+          <h3>Bids (staff can see the bidder)</h3>
+          <table>
+            <tr><th>Amount</th><th>Time</th><th>Buyer</th></tr>
+            <tr><td>€ 54.000</td><td>Thu 15 Oct, 21:10</td><td>Tom Verhoeven</td></tr>
+            <tr><td>€ 52.500</td><td>Thu 15 Oct, 19:02</td><td>P. Janssens</td></tr>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h2>Status</h2>
+          <span class="status open">Active</span>
+          <div class="facts">
+            <div class="fact"><div class="k">Ends</div><div class="v" style="font-size:15px">Sun 18 Oct, 20:00</div></div>
+            <div class="fact"><div class="k">Bids</div><div class="v">6</div></div>
+            <div class="fact"><div class="k">Current bid</div><div class="v">€ 54.000</div></div>
+            <div class="fact"><div class="k">Reserve</div><div class="v" style="font-size:15px">€ 60.000 · not reached</div></div>
+          </div>
+          <h3>Change status to</h3>
+          <p class="small muted">Only the changes that are allowed from Active are shown.</p>
+          <a class="btn ghost" href="#s3">Back to pending</a>
+          <a class="btn ghost" href="#s3">Cancel auction</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="screen laptop rel" id="s3">
+  <div class="top"><span class="brand">VeloVault · Staff</span><span class="user">Sandra M. · Staff</span></div>
+  <div class="wrap" style="padding:24px 32px">
+    <h1>Porsche 911 T, 1973</h1>
+  </div>
+  <div class="overlay">
+    <div class="dialog">
+      <h2>Are you sure you want to cancel this auction?</h2>
+      <table style="margin:12px 0 16px">
+        <tr><th>Car</th><td><b>Porsche 911 T, 1973</b></td></tr>
+        <tr><th>Seller</th><td>Diane Hoekstra</td></tr>
+        <tr><th>Ends</th><td>Sun 18 Oct, 20:00</td></tr>
+        <tr><th>Bids</th><td>6 bids, current bid € 54.000</td></tr>
+        <tr><th>Status</th><td>Active → <b>Cancelled</b></td></tr>
+      </table>
+      <p class="small muted">A cancelled auction can't be opened again. Buyers can't bid anymore.</p>
+      <a class="btn inline" href="#s4" style="height:44px;line-height:44px">Yes, cancel auction</a>
+      <a class="btn ghost inline" href="#s2" style="height:44px;line-height:44px">No, go back</a>
+    </div>
+  </div>
+</section>
+
+<section class="screen laptop" id="s4">
+  <div class="top"><span class="brand">VeloVault · Staff</span><span class="user">Sandra M. · Staff</span></div>
+  <div class="wrap" style="padding:24px 32px">
+    <a class="back" href="#s1">‹ Back to search results</a>
+    <div class="msg ok" style="max-width:720px"><b>The status of Porsche 911 T, 1973 is now Cancelled.</b>Buyers and the seller see the new status straight away.</div>
+    <div class="card" style="max-width:720px">
+      <h2>Status</h2>
+      <span class="status cancelled">Cancelled</span>
+      <p class="small muted" style="margin-top:10px">A cancelled auction can't be changed anymore.</p>
+    </div>
+  </div>
+</section>
+
+<section class="screen laptop" id="s5">
+  <div class="top"><span class="brand">VeloVault · Staff</span><span class="user">Sandra M. · Staff</span></div>
+  <div class="wrap" style="padding:24px 32px">
+    <a class="back" href="#s1">‹ Back to search results</a>
+    <div class="msg error" style="max-width:720px"><b>This auction is Ended now, so it can't be changed to Cancelled.</b>It ended while you had the page open. Nothing was changed.</div>
+    <div class="card" style="max-width:720px">
+      <h2>Status</h2>
+      <span class="status closed">Ended · Sun 18 Oct, 20:00</span>
+      <p class="small muted" style="margin-top:10px">An ended auction can't be changed anymore.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Shows one screen at a time. Use #b1 ... #s5 in the URL, add ?mode=wire for the wireframe look.
+  const params = new URLSearchParams(location.search);
+  if (params.get('mode') === 'wire') document.body.classList.add('wire');
+  function show() {
+    const id = (location.hash || '#b1').slice(1);
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('show', s.id === id));
+  }
+  window.addEventListener('hashchange', show);
+  show();
+</script>
+</body>
+</html>
