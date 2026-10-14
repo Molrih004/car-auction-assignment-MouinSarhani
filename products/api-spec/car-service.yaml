@@ -1,0 +1,228 @@
+openapi: 3.0.3
+info:
+  title: VeloVault car service
+  version: 1.1.0
+  description: |
+    Cars CRUD. Reached through the API gateway on port 3000, the service itself runs on port 4000.
+    The first version only had GET /cars. This sprint adds the rest of CRUD, filters and the seller of a car.
+servers:
+  - url: http://localhost:3000
+    description: Through the API gateway
+  - url: http://localhost:4000
+    description: Car service directly (only inside Docker)
+
+paths:
+  /cars:
+    get:
+      summary: List cars with filters
+      security: []
+      description: Public (BRW-01, BRW-02).
+      parameters:
+        - name: make
+          in: query
+          schema:
+            type: string
+          example: Citroën
+        - name: yearFrom
+          in: query
+          schema:
+            type: integer
+          example: 1960
+        - name: yearTo
+          in: query
+          schema:
+            type: integer
+          example: 1979
+        - name: condition
+          in: query
+          description: One or more, comma separated
+          schema:
+            type: string
+          example: EXCELLENT,GOOD
+      responses:
+        '200':
+          description: List of cars
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Car'
+                  meta:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+    post:
+      summary: Add a car (seller)
+      description: CAR-01. The seller id comes from the login token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarRequest'
+      responses:
+        '201':
+          description: Car added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Car'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+
+  /cars/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get one car
+      security: []
+      responses:
+        '200':
+          description: The car
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Car'
+        '404':
+          $ref: '#/components/responses/Error'
+    put:
+      summary: Change a car (own car or staff)
+      description: CAR-05
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarRequest'
+      responses:
+        '200':
+          description: Car changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Car'
+        '400':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+    delete:
+      summary: Delete a car (own car or staff)
+      description: |
+        CAR-06, CAR-07, STF-06. Not possible when the car has a pending or active auction,
+        then the answer is 409 CAR_HAS_AUCTION with a message that says until when.
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Deleted
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Condition:
+      type: string
+      enum: [EXCELLENT, GOOD, FAIR]
+
+    CarRequest:
+      type: object
+      required: [make, model, year, color, mileage, condition, price]
+      properties:
+        make:
+          type: string
+          example: Citroën
+        model:
+          type: string
+          example: DS 21
+        year:
+          type: integer
+          minimum: 1900
+          example: 1969
+        color:
+          type: string
+          example: Gris Palladium
+        mileage:
+          type: integer
+          minimum: 0
+          example: 112000
+        condition:
+          $ref: '#/components/schemas/Condition'
+        description:
+          type: string
+          maxLength: 5000
+        price:
+          type: number
+          description: Estimated value in euros
+          example: 32000
+
+    Car:
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            sellerId:
+              type: integer
+            createdAt:
+              type: string
+              format: date-time
+        - $ref: '#/components/schemas/CarRequest'
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+  responses:
+    Error:
+      description: Error with a code and a message in normal language
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
