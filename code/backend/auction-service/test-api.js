@@ -20,6 +20,7 @@ const CAR_SERVICE = process.env.CAR_SERVICE_URL || 'http://localhost:4000';
 const seller = { 'X-User-Id': '3', 'X-User-Role': 'SELLER' };
 const otherSeller = { 'X-User-Id': '99', 'X-User-Role': 'SELLER' };
 const buyer = { 'X-User-Id': '1', 'X-User-Role': 'BUYER' };
+const buyer2 = { 'X-User-Id': '2', 'X-User-Role': 'BUYER' };
 const staff = { 'X-User-Id': '4', 'X-User-Role': 'STAFF' };
 
 const SEEDED_ACTIVE = 'a1111111-1111-4111-8111-111111111111';
@@ -129,6 +130,51 @@ const tests = [
   },
   { name: 'Can\'t delete an ended auction', expect: 409, fn: () => request('DELETE', `/auctions/${SEEDED_ENDED}`, { user: staff }) },
   { name: 'Another seller can\'t delete it', expect: 403, fn: () => request('DELETE', `/auctions/${SEEDED_PENDING}`, { user: otherSeller }) },
+  // BID-01: place a bid (use case 1). The seeded active auction has a current bid of 18000 after a fresh seed.
+  { name: 'Bid without login (2a)', expect: 401, fn: () => request('POST', `/auctions/${SEEDED_ACTIVE}/bids`, { body: { amount: 18500 } }) },
+  {
+    name: 'Bid as seller (2b)', expect: 403,
+    fn: () => request('POST', `/auctions/${SEEDED_ACTIVE}/bids`, { body: { amount: 18500 }, user: seller }),
+    check: (res) => res.data.error.code === 'FORBIDDEN_ROLE',
+  },
+  { name: 'Bid that is not a whole number (4a)', expect: 400, fn: () => request('POST', `/auctions/${SEEDED_ACTIVE}/bids`, { body: { amount: 'lots' }, user: buyer }) },
+  {
+    name: 'Bid on a pending auction (3a)', expect: 409,
+    fn: () => request('POST', `/auctions/${SEEDED_PENDING}/bids`, { body: { amount: 50000 }, user: buyer }),
+    check: (res) => res.data.error.code === 'AUCTION_NOT_STARTED' && res.data.error.message.startsWith('This auction starts on'),
+  },
+  {
+    name: 'Bid on an ended auction (3b)', expect: 409,
+    fn: () => request('POST', `/auctions/${SEEDED_ENDED}/bids`, { body: { amount: 50000 }, user: buyer }),
+    check: (res) => res.data.error.code === 'AUCTION_CLOSED',
+  },
+  {
+    name: 'Bid equal to the current bid is too low (4a)', expect: 409,
+    fn: () => request('POST', `/auctions/${SEEDED_ACTIVE}/bids`, { body: { amount: 18000 }, user: buyer }),
+    check: (res) => res.data.error.code === 'BID_TOO_LOW' && res.data.error.details.lowestAllowed === 18001,
+  },
+  {
+    name: 'Place a valid bid (5, 6)', expect: 201,
+    fn: () => request('POST', `/auctions/${SEEDED_ACTIVE}/bids`, { body: { amount: 18500 }, user: buyer }),
+    check: (res) => res.data.data.isHighest === true && res.data.data.currentBid === 18500 && res.data.data.bid.amount === 18500,
+  },
+  {
+    name: 'The auction shows the new current bid (7)', expect: 200,
+    fn: () => request('GET', `/auctions/${SEEDED_ACTIVE}`),
+    check: (res) => res.data.data.currentBid === 18500,
+  },
+  {
+    name: 'Two buyers bid the same amount at the same moment, only one wins (5a, BID-07)', expect: '1 accepted, 1 refused',
+    fn: async () => {
+      const results = await Promise.all([
+        request('POST', `/auctions/${SEEDED_ACTIVE}/bids`, { body: { amount: 19000 }, user: buyer }),
+        request('POST', `/auctions/${SEEDED_ACTIVE}/bids`, { body: { amount: 19000 }, user: buyer2 }),
+      ]);
+      const accepted = results.filter((r) => r.status === 201).length;
+      const refused = results.filter((r) => r.status === 409 && r.data.error.details.lowestAllowed === 19001).length;
+      return { status: `${accepted} accepted, ${refused} refused`, data: results.map((r) => r.data) };
+    },
+  },
   { name: 'Clean up the test car', expect: 204, fn: () => request('DELETE', `/cars/${ctx.carId}`, { base: CAR_SERVICE, user: staff }) },
 ];
 
