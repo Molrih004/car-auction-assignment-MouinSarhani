@@ -45,6 +45,7 @@ classDiagram
         id: uuid
         carId: uuid
         status: PENDING | ACTIVE | ENDED | CANCELLED
+        onHold: boolean
         startingPrice: int
         currentBid: int or null
         bidCount: int
@@ -62,6 +63,7 @@ classDiagram
         id: uuid
         amount: int
         placedAt: datetime
+        isMine: boolean, logged in buyer only
         buyerId: int, staff only
     }
     class PlaceBidRequest {
@@ -208,6 +210,9 @@ These come from the exception paths of the [use cases](use-case-place-bid.md).
 | `BID_TOO_LOW` | 409 | "Your bid has to be at least € [amount]." + `details.lowestAllowed` | Bid 4a, 5a |
 | `STATUS_CHANGE_NOT_ALLOWED` | 409 | "This auction is [status] now, so it can't be changed to [new status]." | Status 8a |
 | `STATUS_UNCHANGED` | 409 | "This auction is already [status]." | Status 8b |
+| `NOT_YOUR_CAR` / `NOT_YOUR_AUCTION` | 403 | "You can only change your own cars." / "...your own auctions." | |
+| `CAR_HAS_AUCTION` | 409 | "This car can't be removed because it has an auction that ends on 14 March." | CAR-07 |
+| `AUCTION_CHECK_FAILED` | 503 | "We can't check if this car has an auction right now. Please try again in a moment." | CAR-06 |
 | `SERVICE_UNAVAILABLE` | 502 | "We can't do this right now. Please try again in a moment." (made by the gateway) | Bid 5b, Status 9a |
 
 **Why 409 for a closed auction or a too low bid:** the request itself is fine (it is a number), but it conflicts with the current state of the auction. 400 is only for a request that is wrong on its own.
@@ -217,3 +222,10 @@ These come from the exception paths of the [use cases](use-case-place-bid.md).
 - `reservePrice` is never sent to a buyer (AUC-04). Only the seller of that auction and staff get it.
 - `buyerId` in the bid history is only sent to staff (BID-05, STF-07).
 - `passwordHash` never leaves the auth service (NFR-12).
+
+## Changed while building
+
+- **`onHold` in the auction.** True after staff put an active auction back to pending. The page shows "Paused by VeloVault" and buyers get "VeloVault has paused this auction" when they bid.
+- **`isMine` in the bid history.** Only for the logged in buyer, so his own bids can show "(you)" without showing anybody's name (BID-05).
+- **Error codes for the car service** (`NOT_YOUR_CAR`, `CAR_HAS_AUCTION`, `AUCTION_CHECK_FAILED`), with the message Sandra asked for: "This car can't be removed because it has an auction that ends on..."
+- **The DTO is made in one place:** `toAuctionDto` in the auction service decides what each user may see. It adds `currentBid` and `bidCount` (computed from the bids), and only adds `reservePrice` and `reserveReached` for the seller and staff.

@@ -34,3 +34,8 @@ Sources: interview 4 (Sandra), interview 1 (Marcus), interview 5 (Erik).
 - **The confirmation shows a lot (step 5).** Sandra once closed the wrong auction because two Porsche 911s were next to each other in the spreadsheet. Make, model, year, seller and end date together make it clear which auction it is.
 - **8b is there because of Erik.** A message can be handled twice, so the same change twice must not do anything strange like cancelling twice.
 - **What happens to bids when an auction goes back to pending** is not answered in the interviews. I chose to keep them, because deleting bids can't be undone. This is still an open question for Sandra.
+
+## Changed while building
+
+- **Back to pending means "on hold".** The start time of an active auction has already passed, so without anything extra the system would start it again a few seconds later. So the auction is marked as on hold: buyers see "Paused by VeloVault" and can't bid, and the auction only starts again after staff set a new start and end time on the same screen.
+- **Step 1, the link in the search results is called "Manage"** instead of "Open", because "Open" is also the status of an auction and that was confusing.

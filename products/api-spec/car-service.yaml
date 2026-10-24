@@ -150,6 +150,12 @@ paths:
           $ref: '#/components/responses/Error'
         '409':
           $ref: '#/components/responses/Error'
+        '503':
+          description: AUCTION_CHECK_FAILED, the auction service didn't answer within 2 seconds. The car is not deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   securitySchemes:

@@ -17,6 +17,7 @@ The frontend only talks to the gateway on `http://localhost:3000`. The gateway c
 | POST | `/auth/register` | everyone | Register as buyer or seller | ACC-01, ACC-03 |
 | POST | `/auth/login` | everyone | Log in, get a JWT | ACC-02 |
 | GET | `/auth/me` | logged in | The logged in user | ACC-02 |
+| GET | `/auth/users` | staff | All users, for the staff screens | STF-01 |
 
 ## Car service
 
@@ -65,3 +66,10 @@ The brief asks for 2 services with CRUD:
 | 404 | Not found |
 | 409 | Not possible in the current state, for example the auction is closed or the bid is too low |
 | 502 | The service behind the gateway is down |
+
+## Changed while building
+
+- `GET /auth/users` was added for the staff screens, so they can show the names of the seller and the buyers.
+- `onHold` was added to the auction and `isMine` to the bid history (see [api-message-design.md](api-message-design.md)).
+- The gateway always forwards `/auth/login` and `/auth/register` without the token, so an old token in the browser never blocks logging in.
+- Deleting a car can also answer `503 AUCTION_CHECK_FAILED` when the auction service doesn't answer within 2 seconds. The car is then not deleted.
