@@ -32,6 +32,12 @@ auctionsRouter.delete('/:id', requireRole('SELLER', 'STAFF'), asyncHandler(async
   res.status(204).end();
 }));
 
+// Public: the history has no names, so everyone can see it (BID-05)
+auctionsRouter.get('/:id/bids', asyncHandler(async (req, res) => {
+  const bids = await bidService.history(req.params.id, req.user);
+  res.json({ data: bids, meta: { count: bids.length } });
+}));
+
 // BID-01: only buyers can bid (ACC-04). The rules are in BidService.
 auctionsRouter.post('/:id/bids', requireRole('BUYER'), asyncHandler(async (req, res) => {
   const { amount } = placeBidSchema.parse(req.body);
