@@ -5,6 +5,7 @@
  *
  * Run the gateway first: npm run dev
  * Make sure car-service (port 4000) and auth-service (port 4001) are also running.
+ * The auction-service test expects 502 when it is NOT running, and 200 when it is.
  * Then run: npm run test:api
  *
  * Targets http://localhost:$PORT (default 3000), or BASE_URL if set.
@@ -37,12 +38,20 @@ const tests = [
   { name: 'GET /cars -> car-service', expect: 200, fn: () => request('GET', '/cars') },
   {
     name: 'POST /auth/register -> auth-service (body is forwarded)', expect: 201,
-    fn: () => request('POST', '/auth/register', { body: { email, password } }),
+    fn: () => request('POST', '/auth/register', { body: { name: 'Gateway Test', email, password, role: 'BUYER' } }),
     after: (res) => { token = res.data?.token; },
   },
   { name: 'POST /auth/login with the same credentials', expect: 200, fn: () => request('POST', '/auth/login', { body: { email, password } }) },
   { name: 'GET /auth/me with token', expect: 200, fn: () => request('GET', '/auth/me', { token }) },
+  { name: 'GET /cars with a valid token', expect: 200, fn: () => request('GET', '/cars', { token }) },
+  { name: 'GET /cars with a wrong token is stopped by the gateway', expect: 401, fn: () => request('GET', '/cars', { token: 'not-a-jwt' }) },
+  {
+    name: 'GET /auctions -> auction-service (502 when it is down)',
+    expect: Number(process.env.EXPECT_AUCTIONS || 502),
+    fn: () => request('GET', '/auctions'),
+  },
   { name: 'Unknown route', expect: 404, fn: () => request('GET', '/does-not-exist') },
+  { name: 'Route that only starts like /cars is not proxied', expect: 404, fn: () => request('GET', '/carsxyz') },
 ];
 
 async function runTests() {

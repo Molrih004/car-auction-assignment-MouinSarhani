@@ -32,9 +32,12 @@ services:
     build: ./api-gateway-service
     environment:
       PORT: 3000
+      # Must be the same secret as auth-service, the gateway checks the tokens
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
       # Service names resolve on the compose network; localhost would point at the gateway container itself
       CAR_SERVICE_URL: http://car-service:4000
       AUTH_SERVICE_URL: http://auth-service:4001
+      AUCTION_SERVICE_URL: http://auction-service:4002
     depends_on:
       - car-service
       - auth-service
