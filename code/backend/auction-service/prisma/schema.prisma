@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  // Explicit so the output is identical on every platform (no .ts import extensions / CJS surprises)
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// See products/erd.md. Amounts are whole euros, times are UTC.
+model Auction {
+  id            String   @id @default(uuid())
+  // Id of the car in the car database. No foreign key, that database belongs to another service.
+  carId         String   @map("car_id")
+  // Id of the user in the auth database
+  sellerId      Int      @map("seller_id")
+  startingPrice Int      @map("starting_price")
+  // Never sent to buyers (AUC-04)
+  reservePrice  Int      @map("reserve_price")
+  startAt       DateTime @map("start_at")
+  endAt         DateTime @map("end_at")
+  // PENDING, ACTIVE, ENDED or CANCELLED (AUC-05)
+  status        String   @default("PENDING")
+  // True when staff put an active auction back to pending. The scheduler then leaves it alone
+  // until a new start time is set, otherwise it would start again straight away.
+  onHold        Boolean  @default(false) @map("on_hold")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  bids          Bid[]
+
+  @@index([carId])
+  @@index([status])
+  @@map("auctions")
+}
+
+model Bid {
+  id        String   @id @default(uuid())
+  auctionId String   @map("auction_id")
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  // Id of the user in the auth database. Only sent to staff (BID-05, STF-07).
+  buyerId   Int      @map("buyer_id")
+  amount    Int
+  placedAt  DateTime @default(now()) @map("placed_at")
+
+  // Two bids with the same amount on one auction are impossible, also when they arrive at the same moment (BID-07)
+  @@unique([auctionId, amount])
+  @@index([auctionId])
+  @@map("bids")
+}

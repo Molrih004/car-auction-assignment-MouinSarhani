@@ -7,6 +7,8 @@ services:
     environment:
       DATABASE_URL: file:/data/database.sqlite
       PORT: 4000
+      # Asked before a car is deleted
+      AUCTION_SERVICE_URL: http://auction-service:4002
       # Replaces all cars with the sample data on every start; set to "false" to keep your data
       SEED_DATABASE: "true"
     volumes:
@@ -28,6 +30,20 @@ services:
     ports:
       - "4001:4001"
 
+  auction-service:
+    build: ./auction-service
+    environment:
+      DATABASE_URL: file:/data/database.sqlite
+      PORT: 4002
+      CAR_SERVICE_URL: http://car-service:4000
+      SCHEDULER_INTERVAL_MS: 5000
+      # Replaces all auctions with the sample data on every start (times relative to now); set to "false" to keep your data
+      SEED_DATABASE: "true"
+    volumes:
+      - auction-data:/data
+    ports:
+      - "4002:4002"
+
   api-gateway-service:
     build: ./api-gateway-service
     environment:
@@ -41,9 +57,11 @@ services:
     depends_on:
       - car-service
       - auth-service
+      - auction-service
     ports:
       - "3000:3000"
 
 volumes:
   car-data:
   auth-data:
+  auction-data:
