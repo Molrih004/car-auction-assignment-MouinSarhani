@@ -13,8 +13,10 @@ datasource db {
 model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
+  name         String   @default("")
   passwordHash String   @map("password_hash")
-  role         String   @default("USER")
+  // BUYER, SELLER or STAFF (ACC-03). STAFF can't be chosen when registering.
+  role         String   @default("BUYER")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 

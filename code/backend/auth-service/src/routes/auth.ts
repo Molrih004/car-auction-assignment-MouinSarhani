@@ -8,8 +8,8 @@ const router = Router();
 const userService = new UserService();
 
 router.post('/register', asyncHandler(async (req, res) => {
-  const { email, password } = registerSchema.parse(req.body);
-  const result = await userService.register(email, password);
+  const input = registerSchema.parse(req.body);
+  const result = await userService.register(input);
   res.status(201).json(result);
 }));
 
@@ -21,7 +21,7 @@ router.post('/login', asyncHandler(async (req, res) => {
 
 router.get('/me', authenticate, asyncHandler(async (req, res) => {
   const user = await userService.findById(req.user!.sub);
-  res.json({ user });
+  res.json({ data: user });
 }));
 
 export { router as authRouter };
