@@ -11,14 +11,20 @@ datasource db {
 }
 
 model Car {
-  id        String   @id @default(uuid())
-  make      String
-  model     String
-  year      Int
-  color     String
-  mileage   Int
-  price     Float
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  // Id of the user in the auth database. No foreign key, that database belongs to another service.
+  sellerId    Int      @default(0) @map("seller_id")
+  make        String
+  model       String
+  year        Int
+  color       String
+  mileage     Int
+  // EXCELLENT, GOOD or FAIR (CAR-02)
+  condition   String   @default("GOOD")
+  description String   @default("")
+  // Estimated value in euros
+  price       Float
+  createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("cars")
 }
