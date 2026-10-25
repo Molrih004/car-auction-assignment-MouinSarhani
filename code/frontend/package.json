@@ -1,0 +1,31 @@
+{
+  "name": "velovault-frontend",
+  "version": "1.0.0",
+  "description": "VeloVault frontend: car list, auction page with bidding, staff status screen",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "lint": "eslint .",
+    "prepare": "svelte-kit sync || echo ''"
+  },
+  "author": "Mouin Sarhani",
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@sveltejs/adapter-static": "^3.0.8",
+    "@sveltejs/kit": "^2.20.2",
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "eslint": "^9.20.0",
+    "eslint-plugin-svelte": "^3.3.3",
+    "globals": "^15.15.0",
+    "svelte": "^5.25.3",
+    "svelte-check": "^4.1.5",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.0",
+    "vite": "^6.2.3"
+  }
+}
