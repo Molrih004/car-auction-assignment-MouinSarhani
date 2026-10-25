@@ -34,6 +34,22 @@ const tooLow = (lowest: number, someoneWasFaster: boolean) => {
 
 export class BidService {
   /**
+   * BID-05, BID-06: bid history, newest first, also after the auction ended.
+   * Nobody sees who placed a bid, except staff (STF-07). A buyer only sees which bids are his own.
+   */
+  async history(auctionId: string, user?: CurrentUser) {
+    await auctionService.find(auctionId); // 404 when the auction doesn't exist
+    const bids = await prisma.bid.findMany({ where: { auctionId }, orderBy: { amount: 'desc' } });
+    return bids.map((bid) => ({
+      id: bid.id,
+      amount: bid.amount,
+      placedAt: bid.placedAt.toISOString(),
+      ...(user?.role === 'BUYER' && { isMine: bid.buyerId === user.id }),
+      ...(user?.role === 'STAFF' && { buyerId: bid.buyerId }),
+    }));
+  }
+
+  /**
    * BID-01: a buyer places a bid. Follows the auction service lane of products/activity-diagram-place-bid.md.
    * The role (step 2) is already checked by requireRole('BUYER') on the route.
    */

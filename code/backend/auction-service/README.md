@@ -83,6 +83,7 @@ Who the user is comes from the `X-User-Id` and `X-User-Role` headers that the AP
 | POST | `/auctions` | seller | Create an auction for your own car, starts as `PENDING` |
 | PATCH | `/auctions/:id` | own seller, staff | Change prices or times while `PENDING` |
 | DELETE | `/auctions/:id` | own seller, staff | Delete a `PENDING` auction without bids |
+| GET | `/auctions/:id/bids` | everyone | Bid history, highest first. No names; a buyer gets `isMine`, staff gets `buyerId` (BID-05, STF-07) |
 | POST | `/auctions/:id/bids` | buyer | Place a bid (BID-01) |
 
 `reservePrice` and `reserveReached` are only in the answer for the seller of that auction and for staff (AUC-04, AUC-08).

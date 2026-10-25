@@ -175,6 +175,29 @@ const tests = [
       return { status: `${accepted} accepted, ${refused} refused`, data: results.map((r) => r.data) };
     },
   },
+  // BID-05: bid history without names
+  {
+    name: 'Bid history for everyone has no buyer', expect: 200,
+    fn: () => request('GET', `/auctions/${SEEDED_ACTIVE}/bids`),
+    check: (res) => res.data.data.length > 0 && res.data.data.every((b) => !('buyerId' in b) && !('isMine' in b))
+      && res.data.data[0].amount > res.data.data[1].amount,
+  },
+  {
+    name: 'A buyer sees which bids are his own', expect: 200,
+    fn: () => request('GET', `/auctions/${SEEDED_ACTIVE}/bids`, { user: buyer }),
+    check: (res) => res.data.data.some((b) => b.isMine === true) && res.data.data.every((b) => !('buyerId' in b)),
+  },
+  {
+    name: 'Staff sees who placed each bid', expect: 200,
+    fn: () => request('GET', `/auctions/${SEEDED_ACTIVE}/bids`, { user: staff }),
+    check: (res) => res.data.data.every((b) => typeof b.buyerId === 'number'),
+  },
+  {
+    name: 'History stays after the auction ended (BID-06)', expect: 200,
+    fn: () => request('GET', `/auctions/${SEEDED_ENDED}/bids`),
+    check: (res) => res.data.meta.count === 15,
+  },
+  { name: 'History of an auction that does not exist', expect: 404, fn: () => request('GET', '/auctions/nope/bids') },
   { name: 'Clean up the test car', expect: 204, fn: () => request('DELETE', `/cars/${ctx.carId}`, { base: CAR_SERVICE, user: staff }) },
 ];
 
