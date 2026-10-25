@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Listing } from '$lib/api/types';
-  import { euros } from '$lib/utils/format';
+  import { dateTime, endsWithinADay, euros, isOpen, timeLeft } from '$lib/utils/format';
   import StatusBadge from './StatusBadge.svelte';
 
   let { listing, now }: { listing: Listing; now: number } = $props();
@@ -11,6 +11,12 @@
   <div>
     <h3>{listing.car.make} {listing.car.model}, {listing.car.year}</h3>
     <StatusBadge auction={listing.auction} {now} />
+    <!-- UXD walkthrough F1: Tom wants to see from the list which auction ends first -->
+    {#if isOpen(listing.auction, now)}
+      <p class="small ends">
+        Ends {dateTime(listing.auction.endAt)}{#if endsWithinADay(listing.auction.endAt, now)}<b class="left">· {timeLeft(listing.auction.endAt, now)} left</b>{/if}
+      </p>
+    {/if}
     <p class="small muted info">
       {#if listing.auction.currentBid !== null}
         Current bid {euros(listing.auction.currentBid)} · {listing.auction.bidCount} bids
@@ -26,5 +32,7 @@
   .listing:hover { border-color: var(--accent); }
   .thumb { flex: none; width: 128px; height: 96px; }
   .info { margin-top: 6px; }
+  .ends { margin: 6px 0 0; }
+  .left { margin-left: 5px; }
   @media (max-width: 420px) { .thumb { width: 96px; height: 80px; } }
 </style>
