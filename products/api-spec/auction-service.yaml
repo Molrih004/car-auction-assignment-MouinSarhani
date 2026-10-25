@@ -154,6 +154,8 @@ paths:
         Allowed for staff: ACTIVE to PENDING, PENDING to CANCELLED, ACTIVE to CANCELLED.
         ENDED and CANCELLED can't change anymore. PENDING to ACTIVE and ACTIVE to ENDED are done by the service itself at the start and end time.
         Sending the same change twice gives STATUS_UNCHANGED and changes nothing (NFR-11).
+        ACTIVE to PENDING puts the auction on hold (onHold true): buyers can't bid and the scheduler doesn't start it again
+        until a new startAt is set with PATCH /auctions/{id}.
       security:
         - bearerAuth: []
       requestBody:
@@ -291,7 +293,7 @@ components:
 
     AuctionSummary:
       type: object
-      required: [id, carId, status, startingPrice, currentBid, bidCount, startAt, endAt]
+      required: [id, carId, status, onHold, startingPrice, currentBid, bidCount, startAt, endAt]
       properties:
         id:
           type: string
@@ -301,6 +303,9 @@ components:
           format: uuid
         status:
           $ref: '#/components/schemas/AuctionStatus'
+        onHold:
+          type: boolean
+          description: True when staff put an active auction back to pending. It doesn't start again until a new startAt is set.
         startingPrice:
           type: integer
           example: 15000
@@ -399,6 +404,9 @@ components:
         placedAt:
           type: string
           format: date-time
+        isMine:
+          type: boolean
+          description: Only for a logged in buyer, true for his own bids (so the page can show "(you)" without names)
         buyerId:
           type: integer
           description: Only for staff
