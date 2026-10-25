@@ -30,7 +30,7 @@ The repository root only holds this README and the `docker-compose.yml` that run
 docker compose up --build
 ```
 
-The frontend is then available at `http://localhost:8080` and the gateway at `http://localhost:3000` — try `GET /cars` or `POST /auth/register`. Databases live in named Docker volumes; `docker compose down -v` removes them. On every start (`SEED_DATABASE` in `docker-compose.yml`), `car-service` is reset to the sample cars, `auction-service` to the sample auctions and `auth-service` creates the demo users below.
+The frontend is then available at `http://localhost:8080` (when 8080 is already in use, start it with `$env:FRONTEND_PORT=8081; docker compose up --build` in PowerShell and open `http://localhost:8081`) and the gateway at `http://localhost:3000` — try `GET /cars` or `POST /auth/register`. Databases live in named Docker volumes; `docker compose down -v` removes them. On every start (`SEED_DATABASE` in `docker-compose.yml`), `car-service` is reset to the sample cars, `auction-service` to the sample auctions and `auth-service` creates the demo users below.
 
 ### Locally with npm
 

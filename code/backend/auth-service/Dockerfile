@@ -31,7 +31,8 @@ COPY --from=build /app/dist ./dist
 # prisma/seed.ts imports the generated client source
 COPY --from=build /app/src/generated ./src/generated
 COPY entrypoint.sh ./
-RUN chmod +x entrypoint.sh && mkdir -p /data
+# Remove Windows line endings (CRLF), otherwise Linux can't run the script
+RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh && mkdir -p /data
 
 EXPOSE 4001
 ENTRYPOINT ["./entrypoint.sh"]

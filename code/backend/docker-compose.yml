@@ -71,7 +71,8 @@ services:
     depends_on:
       - api-gateway-service
     ports:
-      - "8080:80"
+      # Another port when 8080 is already used, in PowerShell: $env:FRONTEND_PORT=8081; docker compose up --build
+      - "${FRONTEND_PORT:-8080}:80"
 
 volumes:
   car-data:
