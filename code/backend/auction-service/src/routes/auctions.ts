@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { auctionService } from '../services/index.js';
+import { auctionService, bidService } from '../services/index.js';
 import { asyncHandler } from '../middleware/errorHandling.js';
 import { requireRole } from '../middleware/currentUser.js';
-import { createAuctionSchema, listQuerySchema, updateAuctionSchema } from '../validation/schemas.js';
+import { createAuctionSchema, listQuerySchema, placeBidSchema, updateAuctionSchema } from '../validation/schemas.js';
 
 export const auctionsRouter = Router();
 
@@ -30,4 +30,10 @@ auctionsRouter.patch('/:id', requireRole('SELLER', 'STAFF'), asyncHandler(async 
 auctionsRouter.delete('/:id', requireRole('SELLER', 'STAFF'), asyncHandler(async (req, res) => {
   await auctionService.delete(req.params.id, req.user!);
   res.status(204).end();
+}));
+
+// BID-01: only buyers can bid (ACC-04). The rules are in BidService.
+auctionsRouter.post('/:id/bids', requireRole('BUYER'), asyncHandler(async (req, res) => {
+  const { amount } = placeBidSchema.parse(req.body);
+  res.status(201).json({ data: await bidService.placeBid(req.params.id, amount, req.user!) });
 }));

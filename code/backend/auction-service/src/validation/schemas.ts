@@ -35,3 +35,10 @@ export const listQuerySchema = z.object({
 
 export type CreateAuctionInput = z.infer<typeof createAuctionSchema>;
 export type UpdateAuctionInput = z.infer<typeof updateAuctionSchema>;
+
+// Body of POST /auctions/:id/bids (BID-01)
+export const placeBidSchema = z.object({
+  amount: z.number({ invalid_type_error: 'Fill in an amount in whole euros.', required_error: 'Fill in an amount in whole euros.' })
+    .int('Fill in an amount in whole euros.')
+    .positive('Fill in an amount in whole euros.'),
+});

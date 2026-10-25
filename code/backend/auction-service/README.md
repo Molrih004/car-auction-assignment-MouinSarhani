@@ -83,6 +83,7 @@ Who the user is comes from the `X-User-Id` and `X-User-Role` headers that the AP
 | POST | `/auctions` | seller | Create an auction for your own car, starts as `PENDING` |
 | PATCH | `/auctions/:id` | own seller, staff | Change prices or times while `PENDING` |
 | DELETE | `/auctions/:id` | own seller, staff | Delete a `PENDING` auction without bids |
+| POST | `/auctions/:id/bids` | buyer | Place a bid (BID-01) |
 
 `reservePrice` and `reserveReached` are only in the answer for the seller of that auction and for staff (AUC-04, AUC-08).
 
@@ -107,6 +108,25 @@ Who the user is comes from the `X-User-Id` and `X-User-Role` headers that the AP
   }
 }
 ```
+
+### Placing a bid (BID-01)
+
+`POST /auctions/:id/bids` with `{ "amount": 18500 }` answers `201`:
+
+```json
+{ "data": { "bid": { "id": "...", "amount": 18500, "placedAt": "2026-10-24T18:42:07.000Z" }, "isHighest": true, "currentBid": 18500, "bidCount": 8 } }
+```
+
+| Code | HTTP | When |
+| --- | --- | --- |
+| `VALIDATION_ERROR` | 400 | The amount is not a whole number above 0 |
+| `UNAUTHORIZED` | 401 | Not logged in |
+| `FORBIDDEN_ROLE` | 403 | Not a buyer |
+| `AUCTION_NOT_STARTED` | 409 | The auction is pending, the message says when it starts |
+| `AUCTION_CLOSED` | 409 | The auction is ended or cancelled, or the end time has passed |
+| `BID_TOO_LOW` | 409 | Not higher than the current bid (or lower than the starting price). `details.lowestAllowed` has the lowest amount that is allowed |
+
+The check "is this still the highest bid?" and the insert are **one SQL statement** (`INSERT ... SELECT ... WHERE amount >= MAX(amount) + 1`) in `src/services/BidService.ts`. SQLite runs one statement at a time, so when two buyers bid at the same moment only the first is saved and the second gets `BID_TOO_LOW` with the new lowest amount (BID-07). A unique index on `(auction_id, amount)` is an extra safety net.
 
 Errors look like `{ "error": { "code": "AUCTION_NOT_FOUND", "message": "We can't find this auction." } }`. The message can be shown to the user directly.
 
