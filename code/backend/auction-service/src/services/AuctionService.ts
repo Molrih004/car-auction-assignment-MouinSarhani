@@ -15,7 +15,7 @@ export const withBidSummary = {
 
 type AuctionWithBids = {
   id: string; carId: string; sellerId: number; startingPrice: number; reservePrice: number;
-  startAt: Date; endAt: Date; status: string; createdAt: Date; updatedAt: Date;
+  startAt: Date; endAt: Date; status: string; onHold: boolean; createdAt: Date; updatedAt: Date;
   bids: { amount: number }[]; _count: { bids: number };
 };
 
@@ -34,6 +34,7 @@ export const toAuctionDto = (auction: AuctionWithBids, user?: CurrentUser) => {
     carId: auction.carId,
     sellerId: auction.sellerId,
     status: auction.status as AuctionStatus,
+    onHold: auction.onHold,
     startingPrice: auction.startingPrice,
     currentBid,
     bidCount: auction._count.bids,

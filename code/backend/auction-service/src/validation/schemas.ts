@@ -42,3 +42,8 @@ export const placeBidSchema = z.object({
     .int('Fill in an amount in whole euros.')
     .positive('Fill in an amount in whole euros.'),
 });
+
+// Body of PATCH /auctions/:id/status (STF-03). Staff can only choose these two, the scheduler sets ACTIVE and ENDED.
+export const statusChangeSchema = z.object({
+  status: z.enum(['PENDING', 'CANCELLED'], { errorMap: () => ({ message: 'Choose pending or cancelled.' }) }),
+});

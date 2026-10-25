@@ -26,6 +26,7 @@ const staff = { 'X-User-Id': '4', 'X-User-Role': 'STAFF' };
 const SEEDED_ACTIVE = 'a1111111-1111-4111-8111-111111111111';
 const SEEDED_PENDING = 'a3333333-3333-4333-8333-333333333333';
 const SEEDED_ENDED = 'a4444444-4444-4444-8444-444444444444';
+const SEEDED_ACTIVE_NO_BIDS = 'a5555555-5555-4555-8555-555555555555';
 
 const ctx = {};
 const inSeconds = (s) => new Date(Date.now() + s * 1000).toISOString();
@@ -198,6 +199,67 @@ const tests = [
     check: (res) => res.data.meta.count === 15,
   },
   { name: 'History of an auction that does not exist', expect: 404, fn: () => request('GET', '/auctions/nope/bids') },
+  // STF-03: change the status (use case 2)
+  { name: 'Change status without login', expect: 401, fn: () => request('PATCH', `/auctions/${SEEDED_ACTIVE_NO_BIDS}/status`, { body: { status: 'PENDING' } }) },
+  { name: 'Change status as buyer (7b)', expect: 403, fn: () => request('PATCH', `/auctions/${SEEDED_ACTIVE_NO_BIDS}/status`, { body: { status: 'PENDING' }, user: buyer }) },
+  { name: 'Change status as the seller (7b)', expect: 403, fn: () => request('PATCH', `/auctions/${SEEDED_ACTIVE_NO_BIDS}/status`, { body: { status: 'CANCELLED' }, user: seller }) },
+  { name: 'Staff can\'t choose ENDED, the scheduler does that', expect: 400, fn: () => request('PATCH', `/auctions/${SEEDED_ACTIVE_NO_BIDS}/status`, { body: { status: 'ENDED' }, user: staff }) },
+  {
+    name: 'Staff puts an active auction back to pending', expect: 200,
+    fn: () => request('PATCH', `/auctions/${SEEDED_ACTIVE_NO_BIDS}/status`, { body: { status: 'PENDING' }, user: staff }),
+    check: (res) => res.data.data.status === 'PENDING' && res.data.data.onHold === true,
+  },
+  {
+    name: 'The same change again changes nothing (8b)', expect: 409,
+    fn: () => request('PATCH', `/auctions/${SEEDED_ACTIVE_NO_BIDS}/status`, { body: { status: 'PENDING' }, user: staff }),
+    check: (res) => res.data.error.code === 'STATUS_UNCHANGED' && res.data.error.message === 'This auction is already pending.',
+  },
+  {
+    name: 'A paused auction doesn\'t accept bids', expect: 409,
+    fn: () => request('POST', `/auctions/${SEEDED_ACTIVE_NO_BIDS}/bids`, { body: { amount: 40000 }, user: buyer }),
+    check: (res) => res.data.error.code === 'AUCTION_NOT_STARTED',
+  },
+  {
+    name: 'The scheduler doesn\'t start a paused auction again', expect: 'PENDING',
+    fn: async () => {
+      await sleep(2500);
+      const res = await request('GET', `/auctions/${SEEDED_ACTIVE_NO_BIDS}`);
+      return { status: res.data.data.status, data: res.data };
+    },
+  },
+  {
+    name: 'Staff sets a new start time, the scheduler starts it again', expect: 'ACTIVE',
+    fn: async () => {
+      await request('PATCH', `/auctions/${SEEDED_ACTIVE_NO_BIDS}`, { body: { startAt: inSeconds(1) }, user: staff });
+      for (let i = 0; i < 10; i++) {
+        await sleep(500);
+        const res = await request('GET', `/auctions/${SEEDED_ACTIVE_NO_BIDS}`);
+        if (res.data.data.status === 'ACTIVE') return { status: 'ACTIVE', data: res.data };
+      }
+      return { status: 'still pending', data: null };
+    },
+  },
+  {
+    name: 'Staff cancels an active auction', expect: 200,
+    fn: () => request('PATCH', `/auctions/${SEEDED_ACTIVE_NO_BIDS}/status`, { body: { status: 'CANCELLED' }, user: staff }),
+    check: (res) => res.data.data.status === 'CANCELLED',
+  },
+  {
+    name: 'A cancelled auction can\'t change anymore (8a)', expect: 409,
+    fn: () => request('PATCH', `/auctions/${SEEDED_ACTIVE_NO_BIDS}/status`, { body: { status: 'PENDING' }, user: staff }),
+    check: (res) => res.data.error.code === 'STATUS_CHANGE_NOT_ALLOWED'
+      && res.data.error.message === 'This auction is cancelled now, so it can\'t be changed to pending.',
+  },
+  {
+    name: 'An ended auction can\'t be cancelled (8a)', expect: 409,
+    fn: () => request('PATCH', `/auctions/${SEEDED_ENDED}/status`, { body: { status: 'CANCELLED' }, user: staff }),
+    check: (res) => res.data.error.code === 'STATUS_CHANGE_NOT_ALLOWED',
+  },
+  {
+    name: 'Staff cancels a pending auction', expect: 200,
+    fn: () => request('PATCH', `/auctions/${SEEDED_PENDING}/status`, { body: { status: 'CANCELLED' }, user: staff }),
+    check: (res) => res.data.data.status === 'CANCELLED',
+  },
   { name: 'Clean up the test car', expect: 204, fn: () => request('DELETE', `/cars/${ctx.carId}`, { base: CAR_SERVICE, user: staff }) },
 ];
 

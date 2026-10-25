@@ -5,7 +5,7 @@ import { HttpError } from '../middleware/errorHandling.js';
 import type { CurrentUser } from '../middleware/currentUser.js';
 import { auctionService } from './AuctionService.js';
 
-type AuctionForBid = { status: string; startAt: Date; endAt: Date; startingPrice: number; bids: { amount: number }[] };
+type AuctionForBid = { status: string; onHold: boolean; startAt: Date; endAt: Date; startingPrice: number; bids: { amount: number }[] };
 
 // BID-02: higher than the current bid, or at least the starting price for the first bid
 const lowestAllowed = (auction: AuctionForBid) =>
@@ -14,6 +14,9 @@ const lowestAllowed = (auction: AuctionForBid) =>
 // BID-03: only an active auction accepts bids. The time is checked too, so a bid one second
 // after the end is refused even when the scheduler hasn't marked the auction as ended yet.
 const checkOpen = (auction: AuctionForBid, now: Date) => {
+  if (auction.status === 'PENDING' && auction.onHold) {
+    throw new HttpError(409, 'AUCTION_NOT_STARTED', 'VeloVault has paused this auction. You can bid again when it has a new start time.');
+  }
   if (auction.status === 'PENDING' || (auction.status === 'ACTIVE' && auction.startAt > now)) {
     throw new HttpError(409, 'AUCTION_NOT_STARTED', `This auction starts on ${dutchDateTime(auction.startAt)}, you can bid from then.`);
   }

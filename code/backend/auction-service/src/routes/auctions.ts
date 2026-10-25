@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { auctionService, bidService } from '../services/index.js';
+import { auctionService, bidService, statusService } from '../services/index.js';
 import { asyncHandler } from '../middleware/errorHandling.js';
 import { requireRole } from '../middleware/currentUser.js';
-import { createAuctionSchema, listQuerySchema, placeBidSchema, updateAuctionSchema } from '../validation/schemas.js';
+import { createAuctionSchema, listQuerySchema, placeBidSchema, statusChangeSchema, updateAuctionSchema } from '../validation/schemas.js';
 
 export const auctionsRouter = Router();
 
@@ -42,4 +42,10 @@ auctionsRouter.get('/:id/bids', asyncHandler(async (req, res) => {
 auctionsRouter.post('/:id/bids', requireRole('BUYER'), asyncHandler(async (req, res) => {
   const { amount } = placeBidSchema.parse(req.body);
   res.status(201).json({ data: await bidService.placeBid(req.params.id, amount, req.user!) });
+}));
+
+// STF-03: only staff can change the status (ACC-04). The allowed changes are in StatusService.
+auctionsRouter.patch('/:id/status', requireRole('STAFF'), asyncHandler(async (req, res) => {
+  const { status } = statusChangeSchema.parse(req.body);
+  res.json({ data: await statusService.changeStatus(req.params.id, status, req.user!) });
 }));

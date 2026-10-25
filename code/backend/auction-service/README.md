@@ -85,6 +85,7 @@ Who the user is comes from the `X-User-Id` and `X-User-Role` headers that the AP
 | DELETE | `/auctions/:id` | own seller, staff | Delete a `PENDING` auction without bids |
 | GET | `/auctions/:id/bids` | everyone | Bid history, highest first. No names; a buyer gets `isMine`, staff gets `buyerId` (BID-05, STF-07) |
 | POST | `/auctions/:id/bids` | buyer | Place a bid (BID-01) |
+| PATCH | `/auctions/:id/status` | staff | Change the status (STF-03) |
 
 `reservePrice` and `reserveReached` are only in the answer for the seller of that auction and for staff (AUC-04, AUC-08).
 
@@ -132,6 +133,26 @@ The check "is this still the highest bid?" and the insert are **one SQL statemen
 Errors look like `{ "error": { "code": "AUCTION_NOT_FOUND", "message": "We can't find this auction." } }`. The message can be shown to the user directly.
 
 ---
+
+### Changing the status (STF-03)
+
+`PATCH /auctions/:id/status` with `{ "status": "CANCELLED" }` or `{ "status": "PENDING" }` answers `200` with the auction. The allowed changes are one table, `STAFF_TRANSITIONS` in `src/services/StatusService.ts`:
+
+| Current status | Staff can change to |
+| --- | --- |
+| `PENDING` | `CANCELLED` |
+| `ACTIVE` | `PENDING`, `CANCELLED` |
+| `ENDED` | nothing |
+| `CANCELLED` | nothing |
+
+| Code | HTTP | When |
+| --- | --- | --- |
+| `VALIDATION_ERROR` | 400 | Status is not `PENDING` or `CANCELLED` |
+| `FORBIDDEN_ROLE` | 403 | Not staff |
+| `STATUS_UNCHANGED` | 409 | The auction already has this status (the same change sent twice) |
+| `STATUS_CHANGE_NOT_ALLOWED` | 409 | Not in the table, for example the auction ended in the meantime |
+
+The update uses `updateMany` with the checked status in the `where`, so if the scheduler changed the auction a moment before, nothing is changed. Putting an active auction back to pending sets `onHold`: buyers get "paused" when they bid, and the scheduler doesn't start it again until a new `startAt` is set with `PATCH /auctions/:id`.
 
 ## Scheduler
 
