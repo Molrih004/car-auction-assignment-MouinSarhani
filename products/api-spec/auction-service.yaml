@@ -1,0 +1,480 @@
+openapi: 3.0.3
+info:
+  title: VeloVault auction service
+  version: 1.0.0
+  description: |
+    Auctions and bids. Reached through the API gateway on port 3000, the service itself runs on port 4002.
+    The gateway checks the login token and sends the user id and role in the headers X-User-Id and X-User-Role.
+    All times are UTC, all amounts are whole euros.
+servers:
+  - url: http://localhost:3000
+    description: Through the API gateway
+  - url: http://localhost:4002
+    description: Auction service directly (only inside Docker)
+tags:
+  - name: Auctions
+  - name: Bids
+  - name: Status
+
+paths:
+  /auctions:
+    get:
+      tags: [Auctions]
+      summary: List auctions
+      security: []
+      description: Public, also without login (BRW-01).
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/AuctionStatus'
+        - name: carId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of auctions, without the reserve price
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuctionSummary'
+                  meta:
+                    $ref: '#/components/schemas/ListMeta'
+    post:
+      tags: [Auctions]
+      summary: Create an auction (seller)
+      description: Seller creates an auction for their own car (AUC-01, AUC-03). A new auction is always PENDING.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuctionRequest'
+      responses:
+        '201':
+          description: Auction created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuctionDetail'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /auctions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/AuctionId'
+    get:
+      tags: [Auctions]
+      summary: Get one auction
+      security: []
+      description: |
+        Public. The reserve price and reserveReached are only in the answer for the seller of this auction and for staff (AUC-04, AUC-08).
+      responses:
+        '200':
+          description: The auction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuctionDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Auctions]
+      summary: Change start, end or prices of a pending auction (seller or staff)
+      description: Only while the auction is PENDING, for example when the seller set a wrong end date (interview Sandra).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAuctionRequest'
+      responses:
+        '200':
+          description: Auction updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuctionDetail'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags: [Auctions]
+      summary: Delete a pending auction without bids (seller or staff)
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Deleted
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /auctions/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/AuctionId'
+    patch:
+      tags: [Status]
+      summary: Change the status of an auction (staff) - STF-03
+      description: |
+        Allowed for staff: ACTIVE to PENDING, PENDING to CANCELLED, ACTIVE to CANCELLED.
+        ENDED and CANCELLED can't change anymore. PENDING to ACTIVE and ACTIVE to ENDED are done by the service itself at the start and end time.
+        Sending the same change twice gives STATUS_UNCHANGED and changes nothing (NFR-11).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusChangeRequest'
+      responses:
+        '200':
+          description: Status changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuctionDetail'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: STATUS_CHANGE_NOT_ALLOWED or STATUS_UNCHANGED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: STATUS_CHANGE_NOT_ALLOWED
+                  message: This auction is ended now, so it can't be changed to cancelled.
+
+  /auctions/{id}/bids:
+    parameters:
+      - $ref: '#/components/parameters/AuctionId'
+    get:
+      tags: [Bids]
+      summary: Bid history of an auction
+      security: []
+      description: Public, newest first. Amount and time only, buyerId is only in the answer for staff (BID-05, BID-06, STF-07).
+      responses:
+        '200':
+          description: The bids
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bid'
+                  meta:
+                    $ref: '#/components/schemas/ListMeta'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Bids]
+      summary: Place a bid (buyer) - BID-01
+      description: |
+        Only a buyer, only on an ACTIVE auction. The amount must be higher than the current bid,
+        the first bid at least the starting price (BID-02, BID-03). When 2 bids come in at the same moment only the first is saved (BID-07).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceBidRequest'
+      responses:
+        '201':
+          description: Bid saved, the buyer is the highest bidder
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PlaceBidResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: AUCTION_NOT_STARTED, AUCTION_CLOSED or BID_TOO_LOW
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tooLow:
+                  value:
+                    error:
+                      code: BID_TOO_LOW
+                      message: Your bid has to be at least € 18.500.
+                      details:
+                        lowestAllowed: 18500
+                closed:
+                  value:
+                    error:
+                      code: AUCTION_CLOSED
+                      message: This auction is closed, you can't bid anymore.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token from POST /auth/login, valid for 7 days. Checked by the gateway.
+
+  parameters:
+    AuctionId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    AuctionStatus:
+      type: string
+      enum: [PENDING, ACTIVE, ENDED, CANCELLED]
+
+    AuctionSummary:
+      type: object
+      required: [id, carId, status, startingPrice, currentBid, bidCount, startAt, endAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        carId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/AuctionStatus'
+        startingPrice:
+          type: integer
+          example: 15000
+        currentBid:
+          type: integer
+          nullable: true
+          description: Highest bid, null when there are no bids yet
+          example: 18000
+        bidCount:
+          type: integer
+          example: 8
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+
+    AuctionDetail:
+      allOf:
+        - $ref: '#/components/schemas/AuctionSummary'
+        - type: object
+          properties:
+            sellerId:
+              type: integer
+            reservePrice:
+              type: integer
+              description: Only for the seller of this auction and staff
+            reserveReached:
+              type: boolean
+              description: Only for the seller of this auction and staff
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    CreateAuctionRequest:
+      type: object
+      required: [carId, startingPrice, reservePrice, startAt, endAt]
+      properties:
+        carId:
+          type: string
+          format: uuid
+        startingPrice:
+          type: integer
+          minimum: 1
+        reservePrice:
+          type: integer
+          minimum: 1
+          description: Can't be lower than startingPrice
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+          description: Must be after startAt
+
+    UpdateAuctionRequest:
+      type: object
+      properties:
+        startingPrice:
+          type: integer
+          minimum: 1
+        reservePrice:
+          type: integer
+          minimum: 1
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+
+    StatusChangeRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING, CANCELLED]
+          description: The statuses staff can choose. ACTIVE and ENDED are set by the service itself.
+
+    Bid:
+      type: object
+      required: [id, amount, placedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          example: 18500
+        placedAt:
+          type: string
+          format: date-time
+        buyerId:
+          type: integer
+          description: Only for staff
+
+    PlaceBidRequest:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+          example: 18500
+
+    PlaceBidResponse:
+      type: object
+      properties:
+        bid:
+          $ref: '#/components/schemas/Bid'
+        isHighest:
+          type: boolean
+        currentBid:
+          type: integer
+        bidCount:
+          type: integer
+
+    ListMeta:
+      type: object
+      properties:
+        count:
+          type: integer
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+              description: Normal language, can be shown to the user
+            details:
+              type: object
+              additionalProperties: true
+
+  responses:
+    ValidationError:
+      description: The request is not correct (VALIDATION_ERROR)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Not logged in or login expired (UNAUTHORIZED)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Logged in, but the role is not allowed (FORBIDDEN_ROLE)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Auction not found (AUCTION_NOT_FOUND)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Not possible in the current state of the auction
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

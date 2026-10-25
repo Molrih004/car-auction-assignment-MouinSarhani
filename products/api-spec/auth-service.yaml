@@ -1,0 +1,157 @@
+openapi: 3.0.3
+info:
+  title: VeloVault auth service
+  version: 1.1.0
+  description: |
+    Register and log in. Reached through the API gateway on port 3000, the service itself runs on port 4001.
+    Changed in this sprint: a name field, and the roles BUYER, SELLER and STAFF instead of USER and ADMIN (ACC-03).
+servers:
+  - url: http://localhost:3000
+    description: Through the API gateway
+  - url: http://localhost:4001
+    description: Auth service directly (only inside Docker)
+
+paths:
+  /auth/register:
+    post:
+      summary: Register as buyer or seller
+      security: []
+      description: ACC-01. You can't register yourself as STAFF (ACC-03).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registered and logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/Error'
+        '409':
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      summary: Log in
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+
+  /auth/me:
+    get:
+      summary: The logged in user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: The user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Signed JWT with sub (user id), email and role. Valid for 7 days (NFR-13).
+
+  schemas:
+    Role:
+      type: string
+      enum: [BUYER, SELLER, STAFF]
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name:
+          type: string
+          example: Tom Verhoeven
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        role:
+          type: string
+          enum: [BUYER, SELLER]
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+  responses:
+    Error:
+      description: Error with a code and a message in normal language
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
