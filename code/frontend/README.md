@@ -31,15 +31,18 @@ src/
 │   ├── +layout.svelte       # Header + the page
 │   ├── +layout.ts           # ssr = false: the app runs in the browser
 │   ├── +error.svelte        # Page not found
-│   └── +page.svelte         # B1 car list with filters
+│   ├── +page.svelte         # B1 car list with filters
+│   └── login/+page.svelte   # B6 log in, then back to where you came from
 └── lib/
     ├── api/
     │   ├── client.ts        # fetch to the gateway, adds the token, turns errors into ApiError
     │   ├── types.ts         # The API messages as TypeScript types
+    │   ├── auth.ts          # POST /auth/login
     │   ├── cars.ts          # GET /cars
     │   └── auctions.ts      # GET /auctions, bids
     ├── stores/
-    │   └── auth.svelte.ts   # Logged in user and token ($state, saved in localStorage)
+    │   ├── auth.svelte.ts   # Logged in user and token ($state, saved in localStorage)
+    │   └── bidDraft.ts      # The typed bid per auction, kept while logging in
     ├── utils/
     │   ├── format.ts        # Dutch time, euros, status in words
     │   └── now.svelte.ts    # Reactive clock and polling with $state and $effect
