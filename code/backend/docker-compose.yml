@@ -1,4 +1,5 @@
-# Runs the full car-auction-starter stack: docker compose up --build
+# Runs the full VeloVault platform: docker compose up --build
+# Frontend: http://localhost:8080 · API gateway: http://localhost:3000
 # Each service builds from its own folder and Dockerfile; nothing here is shared config.
 
 services:
@@ -60,6 +61,17 @@ services:
       - auction-service
     ports:
       - "3000:3000"
+
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        # The browser on your machine talks to the gateway on port 3000
+        PUBLIC_API_URL: http://localhost:3000
+    depends_on:
+      - api-gateway-service
+    ports:
+      - "8080:80"
 
 volumes:
   car-data:

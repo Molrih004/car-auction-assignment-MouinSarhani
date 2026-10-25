@@ -34,4 +34,4 @@ See [products/products.md](products/products.md) for the list of analysis/design
 
 ## Code
 
-See [code/setup.md](code/setup.md) for how the implementation is organized.
+See [code/setup.md](code/setup.md) for how the implementation is organized, how to run it and the demo of the 2 requirements.
