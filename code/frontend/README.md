@@ -32,6 +32,7 @@ src/
 │   ├── +layout.ts           # ssr = false: the app runs in the browser
 │   ├── +error.svelte        # Page not found
 │   ├── +page.svelte         # B1 car list with filters
+│   ├── auctions/[id]/       # B2 to B5 auction page with bid form, confirmation and history
 │   └── login/+page.svelte   # B6 log in, then back to where you came from
 └── lib/
     ├── api/
@@ -46,7 +47,8 @@ src/
     ├── utils/
     │   ├── format.ts        # Dutch time, euros, status in words
     │   └── now.svelte.ts    # Reactive clock and polling with $state and $effect
-    └── components/          # Header, status badge, filters, car card, message box
+    └── components/          # Header, status badge, filters, car card, message box,
+                             # auction facts, bid form, bid history
 ```
 
 ## Reactivity (Svelte 5 runes)
