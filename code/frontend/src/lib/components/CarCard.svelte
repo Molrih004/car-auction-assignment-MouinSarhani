@@ -1,13 +1,15 @@
 <script lang="ts">
   import type { Listing } from '$lib/api/types';
   import { dateTime, endsWithinADay, euros, isOpen, timeLeft } from '$lib/utils/format';
+  import CarPhoto from './CarPhoto.svelte';
   import StatusBadge from './StatusBadge.svelte';
 
   let { listing, now }: { listing: Listing; now: number } = $props();
 </script>
 
 <a href="/auctions/{listing.auction.id}" class="card listing">
-  <div class="photo thumb" aria-hidden="true">photo</div>
+  <!-- alt is empty: the name of the car is the title right next to it, so a screen reader would say it twice -->
+  <div class="thumb"><CarPhoto carId={listing.car.id} alt="" class="fill" /></div>
   <div>
     <h3>{listing.car.make} {listing.car.model}, {listing.car.year}</h3>
     <StatusBadge auction={listing.auction} {now} />

@@ -28,7 +28,10 @@
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--card);
   }
-  .brand { font-size: 22px; letter-spacing: .5px; color: var(--accent); text-decoration: none; font-family: Georgia, "Times New Roman", serif; }
+  .brand {
+    font-size: 18px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+    text-decoration: none; border-left: 4px solid var(--brass); padding-left: 10px;
+  }
   .user { display: flex; align-items: center; gap: 14px; color: var(--muted); flex-wrap: wrap; justify-content: flex-end; }
   .link { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font: inherit; cursor: pointer; }
 </style>
