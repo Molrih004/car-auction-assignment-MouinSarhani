@@ -140,6 +140,7 @@ Base URL: `http://localhost:4001` (or `http://localhost:3000` through the gatewa
 | POST | `/auth/register` | No | Create a user, returns a JWT |
 | POST | `/auth/login` | No | Verify credentials, returns a JWT |
 | GET | `/auth/me` | Yes (`Authorization: Bearer <token>`) | Returns the authenticated user |
+| GET | `/auth/users` | Yes, staff only | All users with name, email, role and registration date (STF-01) |
 
 **`POST /auth/register` request body** (use an email that doesn't exist yet). The role is `BUYER` or `SELLER`, a `STAFF` account can't be made by registering:
 
