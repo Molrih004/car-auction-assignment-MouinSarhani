@@ -50,6 +50,7 @@ const tests = [
     expect: Number(process.env.EXPECT_AUCTIONS || 502),
     fn: () => request('GET', '/auctions'),
   },
+  { name: 'Login still works with an old token in the header', expect: 200, fn: () => request('POST', '/auth/login', { body: { email, password }, token: 'old.expired.token' }) },
   { name: 'Unknown route', expect: 404, fn: () => request('GET', '/does-not-exist') },
   { name: 'Route that only starts like /cars is not proxied', expect: 404, fn: () => request('GET', '/carsxyz') },
 ];

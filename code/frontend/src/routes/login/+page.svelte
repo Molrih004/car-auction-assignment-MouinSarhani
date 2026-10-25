@@ -24,6 +24,8 @@
     event.preventDefault();
     error = null;
     busy = true;
+    // An old token from an earlier visit must not be sent with the login itself
+    if (auth.token) auth.logout();
     try {
       const result = await login(email.trim(), password);
       auth.login(result.token, result.user);

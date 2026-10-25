@@ -112,6 +112,7 @@ See `src/routes/serviceProxy.ts` for the proxy setup and `src/server.ts` for how
 | No `Authorization` header | Forwards it without a user. Public routes (GET cars, GET auctions) work, write routes get `401` from the service |
 | Valid token | Adds `X-User-Id`, `X-User-Role` and `X-User-Name` (URI encoded) and forwards it |
 | Expired or wrong token | Answers `401 UNAUTHORIZED` itself, the request never reaches a service |
+| `/auth/login` or `/auth/register` | Always forwarded without the token, so an old token in the browser never blocks logging in |
 
 `X-User-*` headers sent by the client are always removed first, so nobody can pretend to be staff by sending `X-User-Role: STAFF`. The services trust these headers because they are only reachable through the gateway.
 
