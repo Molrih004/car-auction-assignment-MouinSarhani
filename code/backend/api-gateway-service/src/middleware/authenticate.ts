@@ -11,6 +11,9 @@ interface JwtPayload {
 // The headers the services read to know who the user is (see products/component-diagram.md)
 const USER_HEADERS = ['x-user-id', 'x-user-role', 'x-user-name'];
 
+// Logging in and registering must always work, also when the browser still sends an old token
+const PUBLIC_PATHS = ['/auth/login', '/auth/register'];
+
 /**
  * Checks the login token once, here at the entry point, so the services don't have to (NFR-13).
  *
@@ -24,6 +27,11 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
   USER_HEADERS.forEach((header) => delete req.headers[header]);
 
   const authHeader = req.headers.authorization;
+  if (PUBLIC_PATHS.includes(req.path)) {
+    delete req.headers.authorization;
+    next();
+    return;
+  }
   if (!authHeader) {
     next();
     return;
