@@ -24,4 +24,14 @@ router.get('/me', authenticate, asyncHandler(async (req, res) => {
   res.json({ data: user });
 }));
 
+// Only staff can see all users (STF-01). The token is checked by authenticate, the role here.
+router.get('/users', authenticate, asyncHandler(async (req, res) => {
+  if (req.user!.role !== 'STAFF') {
+    res.status(403).json({ error: { code: 'FORBIDDEN_ROLE', message: 'Only staff can see all users.' } });
+    return;
+  }
+  const users = await userService.listAll();
+  res.json({ data: users, meta: { count: users.length } });
+}));
+
 export { router as authRouter };

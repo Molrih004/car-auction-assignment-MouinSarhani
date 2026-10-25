@@ -37,6 +37,12 @@ export class UserService {
     return toPublicUser(user);
   }
 
+  // STF-01: staff can see all users. createdAt is included so the list can show when someone registered.
+  async listAll() {
+    const users = await prisma.user.findMany({ orderBy: { createdAt: 'asc' } });
+    return users.map((user) => ({ ...toPublicUser(user), createdAt: user.createdAt.toISOString() }));
+  }
+
   private signToken(user: UserRow) {
     const payload: JwtPayload = { sub: user.id, email: user.email, name: user.name, role: user.role as Role };
     return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);

@@ -17,6 +17,7 @@ const BASE = process.env.BASE_URL || `http://localhost:${process.env.PORT || 400
 const email = `test-${Date.now()}@example.com`;
 const password = 'supersecret1';
 let token;
+let staffToken;
 
 async function request(method, path, { body, token } = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -43,7 +44,13 @@ const tests = [
   { name: 'Register as staff is not allowed', expect: 400, fn: () => request('POST', '/auth/register', { body: { name: 'Test', email: `staff-${email}`, password, role: 'STAFF' } }) },
   { name: 'Register without a name', expect: 400, fn: () => request('POST', '/auth/register', { body: { email: `noname-${email}`, password, role: 'SELLER' } }) },
   { name: 'Login', expect: 200, fn: () => request('POST', '/auth/login', { body: { email, password } }) },
-  { name: 'Login demo staff user', expect: 200, fn: () => request('POST', '/auth/login', { body: { email: 'staff@example.com', password } }) },
+  {
+    name: 'Login demo staff user', expect: 200,
+    fn: () => request('POST', '/auth/login', { body: { email: 'staff@example.com', password } }),
+    after: (res) => { staffToken = res.data?.token; },
+  },
+  { name: 'Staff can list all users', expect: 200, fn: () => request('GET', '/auth/users', { token: staffToken }) },
+  { name: 'A buyer can\'t list the users', expect: 403, fn: () => request('GET', '/auth/users', { token }) },
   { name: 'Login with wrong password', expect: 401, fn: () => request('POST', '/auth/login', { body: { email, password: 'wrongpassword' } }) },
   { name: 'Get /me with token', expect: 200, fn: () => request('GET', '/auth/me', { token }) },
   { name: 'Get /me without token', expect: 401, fn: () => request('GET', '/auth/me') },

@@ -33,22 +33,25 @@ src/
 │   ├── +error.svelte        # Page not found
 │   ├── +page.svelte         # B1 car list with filters
 │   ├── auctions/[id]/       # B2 to B5 auction page with bid form, confirmation and history
-│   └── login/+page.svelte   # B6 log in, then back to where you came from
+│   ├── login/+page.svelte   # B6 log in, then back to where you came from
+│   └── staff/               # S1 search auctions, S2 to S5 change the status (+layout.ts: staff only)
 └── lib/
     ├── api/
     │   ├── client.ts        # fetch to the gateway, adds the token, turns errors into ApiError
     │   ├── types.ts         # The API messages as TypeScript types
     │   ├── auth.ts          # POST /auth/login
     │   ├── cars.ts          # GET /cars
-    │   └── auctions.ts      # GET /auctions, bids
+    │   ├── auctions.ts      # GET /auctions, bids, status
+    │   └── users.ts         # GET /auth/users (staff)
     ├── stores/
     │   ├── auth.svelte.ts   # Logged in user and token ($state, saved in localStorage)
     │   └── bidDraft.ts      # The typed bid per auction, kept while logging in
     ├── utils/
     │   ├── format.ts        # Dutch time, euros, status in words
-    │   └── now.svelte.ts    # Reactive clock and polling with $state and $effect
+    │   ├── now.svelte.ts    # Reactive clock and polling with $state and $effect
+    │   └── status.ts        # The status changes staff may make (same table as the server)
     └── components/          # Header, status badge, filters, car card, message box,
-                             # auction facts, bid form, bid history
+                             # auction facts, bid form, bid history, confirm dialog
 ```
 
 ## Reactivity (Svelte 5 runes)
