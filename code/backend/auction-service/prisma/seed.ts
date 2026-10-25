@@ -25,11 +25,12 @@ const DAY = 24 * HOUR;
 // Times are relative to now, so the demo always has an auction that ends soon, one that hasn't started and one that ended
 const at = (offsetMs: number) => new Date(Math.round((Date.now() + offsetMs) / 60000) * 60000);
 
-// Bids from the starting price up, every bid higher than the one before, buyers taking turns
+// Bids from the starting price up, every bid higher than the one before, buyers taking turns.
+// The last (highest) bid is always from the second buyer, so in the demo Tom has to bid to become the highest.
 const bidsFor = (from: number, step: number, count: number, firstAt: number, lastAt: number) =>
   Array.from({ length: count }, (_, i) => ({
     amount: from + i * step,
-    buyerId: BUYERS[i % BUYERS.length],
+    buyerId: BUYERS[(count - i) % BUYERS.length],
     placedAt: at(firstAt + ((lastAt - firstAt) * i) / Math.max(count - 1, 1)),
   }));
 
