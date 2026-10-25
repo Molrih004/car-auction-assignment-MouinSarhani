@@ -61,12 +61,15 @@ docker run -p 4000:4000 \
 erDiagram
     CAR {
         uuid    id
+        int     seller_id "id of the user in the auth database"
         string  make
         string  model
         int     year
         string  color
         int     mileage
-        float   price
+        string  condition "EXCELLENT | GOOD | FAIR"
+        string  description
+        float   price "estimated value"
         timestamp created_at
     }
 ```
@@ -83,10 +86,13 @@ src/
 ├── lib/
 │   └── prisma.ts          # Shared Prisma client (SQLite adapter)
 ├── middleware/
-│   ├── errorHandling.ts   # asyncHandler wrapper + central error handler
+│   ├── currentUser.ts     # Reads the user from the gateway headers + requireRole()
+│   ├── errorHandling.ts   # HttpError, asyncHandler wrapper + central error handler
 │   └── requestLogger.ts   # Request logging middleware
 ├── routes/
-│   └── cars.ts            # GET /cars
+│   └── cars.ts            # GET, POST, PUT, DELETE /cars
+├── validation/
+│   └── schemas.ts         # Zod schemas for the car body and the filters
 ├── services/
 │   ├── CarService.ts
 │   └── index.ts
@@ -131,9 +137,17 @@ List responses include a `meta` object:
 
 ### Cars
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | `/cars` | List all cars |
+| Method | Path | Who | Description |
+| --- | --- | --- | --- |
+| GET | `/cars` | everyone | List cars. Filters: `make` (comma separated), `yearFrom`, `yearTo`, `condition` (comma separated) |
+| GET | `/cars/:id` | everyone | One car |
+| POST | `/cars` | seller | Add a car, the seller id comes from the login |
+| PUT | `/cars/:id` | own seller, staff | Change a car |
+| DELETE | `/cars/:id` | own seller, staff | Delete a car. Refused (`409 CAR_HAS_AUCTION`) when it has a pending or active auction, and `503` when the auction service can't be asked within 2 seconds |
+
+Who the user is comes from the `X-User-Id` and `X-User-Role` headers that the API gateway adds after checking the token. Without them a write route answers `401`, with the wrong role `403`.
+
+Example: `GET /cars?make=Citroën,Peugeot&yearTo=1979&condition=EXCELLENT,GOOD`
 
 **`GET /cars` response:**
 
@@ -142,12 +156,15 @@ List responses include a `meta` object:
   "data": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
-      "make": "Volkswagen",
-      "model": "Golf",
-      "year": 2019,
-      "color": "Blue",
-      "mileage": 42000,
-      "price": 16500,
+      "sellerId": 3,
+      "make": "Citroën",
+      "model": "DS 21 Pallas",
+      "year": 1969,
+      "color": "Gris Palladium",
+      "mileage": 112000,
+      "condition": "GOOD",
+      "description": "Restored in 2015...",
+      "price": 32000,
       "createdAt": "2026-07-09T00:00:00.000Z"
     }
   ],
@@ -179,8 +196,12 @@ All errors return a structured `error` object:
 
 | Status | Code | Meaning |
 | --- | --- | --- |
-| 404 | `NOT_FOUND` | Resource does not exist |
-| 400 | `VALIDATION_ERROR` | Request body failed Zod validation |
+| 400 | `VALIDATION_ERROR` | Request body or filter failed Zod validation |
+| 401 | `UNAUTHORIZED` | Not logged in |
+| 403 | `FORBIDDEN_ROLE` / `NOT_YOUR_CAR` | Wrong role, or not your own car |
+| 404 | `CAR_NOT_FOUND` | Car does not exist |
+| 409 | `CAR_HAS_AUCTION` | Car has a pending or active auction, so it can't be deleted |
+| 503 | `AUCTION_CHECK_FAILED` | The auction service didn't answer, the car is not deleted |
 | 500 | `INTERNAL_ERROR` | Server or database error |
 
 ---
@@ -335,7 +356,7 @@ This service uses native ESM (`"type": "module"` + `moduleResolution: NodeNext`)
 
 ## Sample Data
 
-The seed script populates 5 sample cars (Volkswagen Golf, Toyota Corolla, BMW 3 Series, Ford Focus, Tesla Model 3).
+The seed script populates 6 classic cars of the demo seller (user id 3, `seller@example.com`): Citroën DS 21 Pallas, Porsche 911 T, Peugeot 404 Coupé, Alfa Romeo Giulia Sprint GT, Citroën SM and Mercedes-Benz 280 SL. They have fixed ids so the auction-service seed can make auctions for them.
 
 ---
 
