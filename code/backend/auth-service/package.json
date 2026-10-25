@@ -14,7 +14,8 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
     "type-check": "tsc --noEmit",
-    "test:api": "node test-api.js"
+    "test:api": "node test-api.js",
+    "lint": "eslint ."
   },
   "keywords": [
     "auth",
@@ -36,14 +37,18 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@eslint/js": "^9.20.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^24.19.0",
+    "eslint": "^9.20.0",
+    "globals": "^15.15.0",
     "prisma": "^7.0.0",
     "tsx": "^4.23.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "typescript-eslint": "^8.24.0"
   }
 }
