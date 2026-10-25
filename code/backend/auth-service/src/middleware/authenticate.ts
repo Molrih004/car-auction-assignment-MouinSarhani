@@ -10,19 +10,21 @@ declare global {
   }
 }
 
+const unauthorized = (res: Response) =>
+  res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Your login has expired. Please log in again.' } });
+
 export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    unauthorized(res);
     return;
   }
 
   const token = authHeader.slice(7);
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET!) as unknown as JwtPayload;
-    req.user = payload;
+    req.user = jwt.verify(token, process.env.JWT_SECRET!) as unknown as JwtPayload;
     next();
   } catch {
-    res.status(401).json({ error: 'Invalid or expired token' });
+    unauthorized(res);
   }
 };

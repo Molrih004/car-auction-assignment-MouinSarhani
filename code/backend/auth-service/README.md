@@ -33,14 +33,16 @@ The API will be available at `http://localhost:4001`.
 
 ### Demo users
 
-`npm run prisma:seed` creates two accounts you can log in with straight away:
+`npm run prisma:seed` creates four accounts you can log in with straight away. They are named after the personas from the interviews:
 
-| Email | Password | Role |
-| --- | --- | --- |
-| `student@example.com` | `supersecret1` | `USER` |
-| `admin@example.com` | `supersecret1` | `ADMIN` |
+| Email | Password | Name | Role |
+| --- | --- | --- | --- |
+| `buyer@example.com` | `supersecret1` | Tom Verhoeven | `BUYER` |
+| `buyer2@example.com` | `supersecret1` | Pieter Janssens | `BUYER` |
+| `seller@example.com` | `supersecret1` | Diane Hoekstra | `SELLER` |
+| `staff@example.com` | `supersecret1` | Sandra Meijer | `STAFF` |
 
-The seed only creates or resets these two accounts (to the password and role above); users who registered themselves are kept. Any other email has to be registered first with `POST /auth/register`. These credentials are for local development only.
+The seed only creates or resets these accounts (to the password and role above); users who registered themselves are kept. Any other email has to be registered first with `POST /auth/register`. These credentials are for local development only.
 
 ### Build for Production
 
@@ -74,8 +76,9 @@ erDiagram
     USER {
         int    id
         string email
+        string name
         string password_hash
-        string role  "USER | ADMIN"
+        string role  "BUYER | SELLER | STAFF"
         timestamp created_at
         timestamp updated_at
     }
@@ -138,10 +141,16 @@ Base URL: `http://localhost:4001` (or `http://localhost:3000` through the gatewa
 | POST | `/auth/login` | No | Verify credentials, returns a JWT |
 | GET | `/auth/me` | Yes (`Authorization: Bearer <token>`) | Returns the authenticated user |
 
-**`POST /auth/register` / `POST /auth/login` request body** (the seeded `student@example.com` can log in right away; for register, use an email that doesn't exist yet):
+**`POST /auth/register` request body** (use an email that doesn't exist yet). The role is `BUYER` or `SELLER`, a `STAFF` account can't be made by registering:
 
 ```json
-{ "email": "student@example.com", "password": "supersecret1" }
+{ "name": "Tom Verhoeven", "email": "tom@example.com", "password": "supersecret1", "role": "BUYER" }
+```
+
+**`POST /auth/login` request body** (the seeded users can log in right away):
+
+```json
+{ "email": "buyer@example.com", "password": "supersecret1" }
 ```
 
 **Response (both routes):**
@@ -149,16 +158,18 @@ Base URL: `http://localhost:4001` (or `http://localhost:3000` through the gatewa
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIs...",
-  "user": { "id": 1, "email": "student@example.com", "role": "USER" }
+  "user": { "id": 1, "email": "buyer@example.com", "name": "Tom Verhoeven", "role": "BUYER" }
 }
 ```
+
+The token holds `sub` (user id), `email`, `name` and `role`, and is valid for 7 days. Errors look like `{ "error": { "code": "EMAIL_IN_USE", "message": "..." } }`, the message can be shown to the user.
 
 `register` returns `409` if the email is already taken. `login` returns `401` for a wrong email or password — the same error either way, so the response doesn't reveal whether an account exists.
 
 **`GET /auth/me` response:**
 
 ```json
-{ "user": { "id": 1, "email": "student@example.com", "role": "USER" } }
+{ "data": { "id": 1, "email": "buyer@example.com", "name": "Tom Verhoeven", "role": "BUYER" } }
 ```
 
 Returns `401` if the `Authorization` header is missing, malformed, or the token is invalid/expired.

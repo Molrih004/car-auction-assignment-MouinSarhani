@@ -59,16 +59,18 @@ npm run dev
 
 ### Demo users
 
-The auth-service seed creates two accounts for local development (see [auth-service/README.md](auth-service/README.md#demo-users)):
+The auth-service seed creates four accounts for local development (see [auth-service/README.md](auth-service/README.md#demo-users)):
 
 | Email | Password | Role |
 | --- | --- | --- |
-| `student@example.com` | `supersecret1` | `USER` |
-| `admin@example.com` | `supersecret1` | `ADMIN` |
+| `buyer@example.com` | `supersecret1` | `BUYER` |
+| `buyer2@example.com` | `supersecret1` | `BUYER` |
+| `seller@example.com` | `supersecret1` | `SELLER` |
+| `staff@example.com` | `supersecret1` | `STAFF` |
 
 ```bash
 curl -X POST http://localhost:3000/auth/login -H 'Content-Type: application/json' \
-  -d '{"email":"student@example.com","password":"supersecret1"}'
+  -d '{"email":"buyer@example.com","password":"supersecret1"}'
 ```
 
 Any other email has to be registered first with `POST /auth/register`.

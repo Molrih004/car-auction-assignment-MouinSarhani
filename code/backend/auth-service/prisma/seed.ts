@@ -10,9 +10,12 @@ const prisma = new PrismaClient({ adapter });
 
 // Demo accounts for local development only — never use these credentials in production
 const DEMO_PASSWORD = 'supersecret1';
+// Named after the personas from the interviews, so the demo matches the products
 const demoUsers = [
-  { email: 'student@example.com', role: 'USER' },
-  { email: 'admin@example.com', role: 'ADMIN' },
+  { email: 'buyer@example.com', name: 'Tom Verhoeven', role: 'BUYER' },
+  { email: 'buyer2@example.com', name: 'Pieter Janssens', role: 'BUYER' },
+  { email: 'seller@example.com', name: 'Diane Hoekstra', role: 'SELLER' },
+  { email: 'staff@example.com', name: 'Sandra Meijer', role: 'STAFF' },
 ];
 
 async function main() {
@@ -22,11 +25,11 @@ async function main() {
 
   // Upsert instead of deleting: users who registered themselves are kept,
   // and the demo accounts are reset to their known password and role.
-  for (const { email, role } of demoUsers) {
+  for (const { email, name, role } of demoUsers) {
     await prisma.user.upsert({
       where: { email },
-      update: { passwordHash, role },
-      create: { email, passwordHash, role },
+      update: { name, passwordHash, role },
+      create: { email, name, passwordHash, role },
     });
   }
 

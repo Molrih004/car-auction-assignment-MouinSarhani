@@ -21,7 +21,7 @@ services:
       PORT: 4001
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
       JWT_EXPIRES_IN: 7d
-      # Creates/resets the demo users (student@ and admin@example.com, password supersecret1); other users are kept
+      # Creates/resets the demo users (buyer@, buyer2@, seller@ and staff@example.com, password supersecret1); other users are kept
       SEED_DATABASE: "true"
     volumes:
       - auth-data:/data
