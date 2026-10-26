@@ -9,6 +9,7 @@
   import AuctionFacts from '$lib/components/AuctionFacts.svelte';
   import BidForm from '$lib/components/BidForm.svelte';
   import BidHistory from '$lib/components/BidHistory.svelte';
+  import CarPhoto from '$lib/components/CarPhoto.svelte';
   import MessageBox from '$lib/components/MessageBox.svelte';
   import StatusBadge from '$lib/components/StatusBadge.svelte';
 
@@ -57,7 +58,7 @@
   {/if}
 
   {#if auction}
-    <div class="photo hero" aria-hidden="true">1 / 54 photos</div>
+    <CarPhoto carId={auction.carId} alt={car ? `${car.make} ${car.model} from ${car.year}, ${car.color}` : ''} class="hero" />
 
     {#if car}
       <h1>{car.make} {car.model}, {car.year}</h1>
@@ -105,6 +106,6 @@
 
 <style>
   .back { display: inline-block; margin-bottom: 12px; text-decoration: none; }
-  .hero { height: 220px; margin-bottom: 12px; }
+  :global(.photo.hero) { height: 220px; margin-bottom: 12px; }
   abbr { text-decoration: underline dotted; cursor: help; }
 </style>

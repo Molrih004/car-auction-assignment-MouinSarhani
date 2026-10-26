@@ -11,8 +11,9 @@ Marcus wants the platform to feel "like walking into our showroom. Calm, a bit o
 
 | Choice | Why |
 |---|---|
-| Warm off-white background, dark green as the only accent colour | Calm and trustworthy, not like a flea market site |
-| Serif font for the car names and titles, sans serif for the rest | A bit of polish, but the numbers stay easy to read on a phone |
+| Light grey-blue background, white cards, navy as the only colour for buttons and links | Calm and trustworthy, like a bank or a good showroom, not like a flea market site. One accent colour means Tom always knows what he can press. |
+| Brass only as a small detail on the logo | Like the badge on a classic car: a bit of polish without stealing attention from the cars |
+| One sans serif font, logo in capitals, titles in semi-bold | Clean and easy to read on a phone, also the numbers (current bid, time left) |
 | Big photo on top of the auction page | The car is the main thing |
 | No red, no capitals, no flashing banners, also not in the last hour | Marcus: no "ONLY 2 HOURS LEFT!!!" |
 | Status always as a word with a dot, never only a colour | Tom is red-green colour-blind (BRW-05) |
@@ -42,5 +43,18 @@ Marcus wants the platform to feel "like walking into our showroom. Calm, a bit o
 
 ## Not in the prototype
 
-- The real car photos. There is a placeholder with the number of photos.
+- More than one photo per car, and uploading photos (CAR-03). That is not part of my 2 requirements, so each car has one demo photo.
 - Screens for adding a car and creating an auction. They are not part of my 2 requirements.
+
+## Photo credits
+
+The demo photos come from Wikimedia Commons and are in [hi-fi-prototype/photos/](hi-fi-prototype/photos/). The app uses the same photos, see [code/frontend/static/cars/CREDITS.md](../code/frontend/static/cars/CREDITS.md).
+
+| Photo | Author | Licence |
+|---|---|---|
+| [Citroën DS 21 Pallas](https://commons.wikimedia.org/wiki/File:Citroen_DS_21_Pallas_(45176422461).jpg) | Guillaume Vachey | CC0 |
+| [Porsche 911 T](https://commons.wikimedia.org/wiki/File:Porsche-911-T-2.4-Classic-1973-LightIvory131-RAL1015-ARG-badgePCA-byRundvald.jpg) | Rundvald | CC BY-SA 4.0 |
+| [Peugeot 404 Coupé](https://commons.wikimedia.org/wiki/File:Peugeot-404-coupe-Pininfarina-ecusson-Autocyclettes-byRundvald.jpg) | Rundvald | CC BY-SA 4.0 |
+| [Alfa Romeo Giulia Sprint GT](https://commons.wikimedia.org/wiki/File:Alfa_Romeo_Giulia_Sprint_GT_(Bertone)-_P5200993-2.jpg) | Ermell | CC BY-SA 4.0 |
+| [Citroën SM](https://commons.wikimedia.org/wiki/File:Le_Mans_-_Musee_24h_-_Citroen_SM_1.jpg) | Selbymay | CC BY-SA 3.0 |
+| [Mercedes-Benz 280 SL](https://commons.wikimedia.org/wiki/File:Mercedes-Benz_W113_280_SL_2014-09-07_12-45-34.jpg) | Berthold Werner | CC BY-SA 3.0 |

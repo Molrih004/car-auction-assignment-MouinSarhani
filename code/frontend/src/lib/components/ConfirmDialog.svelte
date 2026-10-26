@@ -36,6 +36,6 @@
 
 <style>
   dialog { border: 0; border-radius: 10px; padding: 24px; width: min(540px, calc(100vw - 32px)); background: var(--card); color: var(--ink); }
-  dialog::backdrop { background: rgba(30, 42, 35, .45); }
+  dialog::backdrop { background: rgba(26, 34, 51, .45); }
   .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
 </style>

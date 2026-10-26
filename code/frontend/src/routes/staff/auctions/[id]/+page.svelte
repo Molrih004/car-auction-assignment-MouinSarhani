@@ -8,6 +8,7 @@
   import { dateTime, euros } from '$lib/utils/format';
   import { STAFF_TRANSITIONS, actionLabel, statusName } from '$lib/utils/status';
   import { createNow } from '$lib/utils/now.svelte';
+  import CarPhoto from '$lib/components/CarPhoto.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import MessageBox from '$lib/components/MessageBox.svelte';
   import StatusBadge from '$lib/components/StatusBadge.svelte';
@@ -103,7 +104,7 @@
   {#if auction}
     <div class="cols">
       <div>
-        <div class="photo hero" aria-hidden="true">photo</div>
+        <CarPhoto carId={auction.carId} alt={carName} class="hero" />
         <h1>{carName}</h1>
         <p class="muted">Seller: {seller?.name ?? `User ${auction.sellerId}`} · {seller?.email ?? ''}</p>
 
@@ -197,7 +198,7 @@
 <style>
   .back { display: inline-block; margin-bottom: 12px; text-decoration: none; }
   .cols { display: grid; grid-template-columns: 1fr 420px; gap: 24px; align-items: start; }
-  .hero { height: 280px; margin-bottom: 14px; }
+  :global(.photo.hero) { height: 280px; margin-bottom: 14px; }
   .small-v { font-size: 15px; }
   .stack { display: grid; gap: 8px; }
   .gap { margin-top: 12px; }
